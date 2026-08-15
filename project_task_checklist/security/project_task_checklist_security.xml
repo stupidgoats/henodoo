@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Multi-company record rule: a checklist line should only be visible/
+         editable to users who belong to the line's company (or to no
+         company at all, mirroring the pattern used throughout Odoo core,
+         e.g. account.move). Without this rule, ir.model.access.csv alone
+         would let a user in Company B read/write a checklist line that
+         belongs to a Company A task via direct RPC/search, even though
+         they can't see the parent task. This is a global rule (no groups),
+         so it ANDs with the CRUD access defined in ir.model.access.csv
+         rather than replacing it. -->
+    <record id="project_task_checklist_line_comp_rule" model="ir.rule">
+        <field name="name">Project Task Checklist Line: multi-company</field>
+        <field name="model_id" ref="model_project_task_checklist_line"/>
+        <field name="global" eval="True"/>
+        <field name="domain_force">
+            ['|', ('company_id', '=', False), ('company_id', 'in', company_ids)]
+        </field>
+    </record>
+
+</odoo>
