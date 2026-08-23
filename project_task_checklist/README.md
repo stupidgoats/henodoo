@@ -10,8 +10,9 @@ occurrence of a recurring task.
 - **`project.task.checklist.line`** — one record per checklist row.
   Fields: `task_id`, `sequence`, `display_type` (blank = normal item,
   `line_section` = non-checkable section header), `name`, `is_done`,
-  `done_by` / `done_date` (auto-stamped), `user_id` (optional per-item
-  assignee), `date_deadline` (optional per-item due date).
+  `done_by` / `done_date` (auto-stamped when an item is checked). No
+  per-item assignee or due date — the task's own `user_ids` and
+  `date_deadline` cover that.
 - **`project.task`** extension — `checklist_line_ids` (One2many),
   computed `checklist_total_count` / `checklist_done_count` /
   `checklist_progress`, and an `action_reset_checklist()` method wired to
@@ -74,6 +75,9 @@ model.
 
 ## Changelog
 
+- **v1.0.2**: Removed the per-item `user_id` (assignee) and
+  `date_deadline` (due date) fields — the task itself already carries
+  an assignee and a due date, so per-item versions were redundant.
 - **v1.0.1**: Fixed a `ParseError` ("Field \"display_type\" does not
   exist in model \"project.task\"") on install. Odoo 18 renamed the
   `<tree>` view tag to `<list>` — including for nested one2many subviews
@@ -113,7 +117,8 @@ the xpath/card syntax to match your exact base view.
    with the `project` app installed.
 2. Open a task, go to the **Checklist** tab, add a section and a couple
    of items, check one off. Confirm the progress bar and kanban badge
-   update.
+   update. Confirm there is no assignee/due date column on checklist
+   items.
 3. Enable recurrence on the task (repeat e.g. daily), mark it done so
    the next occurrence is generated (or trigger the recurrence cron
    manually). Open the new occurrence and confirm the checklist items

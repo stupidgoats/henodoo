@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.1.0.1',
+    'version': '18.0.1.0.2',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, auto-reset on recurrence',
     'description': """
@@ -13,7 +13,6 @@ Features
 --------
 * Reorderable checklist items, with optional section headers to group
   long checklists.
-* Optional per-item assignee and due date.
 * Progress (done / total) shown on the task form and on the kanban card.
 * Checklist state automatically resets to "unchecked" whenever a task is
   copied - this covers:
