@@ -23,7 +23,7 @@
                                 confirm="Uncheck every item on this checklist?"/>
                     </div>
                     <field name="checklist_line_ids">
-                        <tree editable="bottom" decoration-bold="display_type == 'line_section'">
+                        <list editable="bottom" decoration-bold="display_type == 'line_section'">
                             <field name="sequence" widget="handle"/>
                             <field name="display_type" column_invisible="1"/>
                             <field name="is_done" invisible="display_type == 'line_section'"/>
@@ -39,7 +39,7 @@
                                 <create string="Add a section"
                                         context="{'default_display_type': 'line_section'}"/>
                             </control>
-                        </tree>
+                        </list>
                     </field>
                 </page>
             </page>

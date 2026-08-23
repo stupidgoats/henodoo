@@ -26,13 +26,6 @@ occurrence of a recurring task.
   intentionally not included — add a row to
   `security/ir.model.access.csv` if portal users should see/edit
   checklists on their tasks.
-- **Multi-company record rule** (`security/project_task_checklist_security.xml`)
-  restricting checklist lines to users in the line's company (or lines
-  with no company), the same pattern Odoo core uses for models like
-  `account.move`. Without it, `ir.model.access.csv` alone would let a
-  user in Company B read/write a checklist line belonging to a Company A
-  task via direct RPC/search, even though they can't see the parent
-  task.
 
 ## How the recurrence reset works
 
@@ -79,6 +72,15 @@ model.
   checking `checklist_progress` when `stage_id` changes to a "folded"/
   done-type stage).
 
+## Changelog
+
+- **v1.0.1**: Fixed a `ParseError` ("Field \"display_type\" does not
+  exist in model \"project.task\"") on install. Odoo 18 renamed the
+  `<tree>` view tag to `<list>` — including for nested one2many subviews
+  inside a form, which is what the checklist tab uses. The subview
+  under `checklist_line_ids` now uses `<list>` instead of `<tree>`; no
+  other attributes changed.
+
 ## Verification performed in this environment
 
 I don't have a running Odoo 18 + PostgreSQL instance in this sandbox, so
@@ -98,6 +100,12 @@ instance has customizations to the task form/kanban view, or if a point
 release has shifted the base view slightly — if an xpath fails to match,
 Odoo's error message will name the exact missing anchor, which is
 usually a one-line fix.
+
+In particular, the kanban card patch (`view_task_kanban_inherit_checklist`)
+had not actually been exercised by a real install as of v1.0.1 — the form
+view's `<tree>`/`<list>` bug above stopped installation before Odoo got to
+it. If it errors on your instance, paste the traceback and I'll adjust
+the xpath/card syntax to match your exact base view.
 
 ## Manual test checklist
 
