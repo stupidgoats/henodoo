@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.1.0.0',
+    'version': '18.0.1.0.1',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, auto-reset on recurrence',
     'description': """
@@ -43,7 +43,6 @@ to force the "done" state back to False on every copy.
     'depends': ['project'],
     'data': [
         'security/ir.model.access.csv',
-        'security/project_task_checklist_security.xml',
         'views/project_task_checklist_views.xml',
     ],
     'installable': True,
