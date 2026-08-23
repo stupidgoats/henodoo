@@ -31,9 +31,6 @@ class ProjectTaskChecklistLine(models.Model):
     done_date = fields.Datetime(
         string='Done on', readonly=True, copy=False)
 
-    user_id = fields.Many2one('res.users', string='Assigned to')
-    date_deadline = fields.Date(string='Due Date')
-
     @api.onchange('is_done')
     def _onchange_is_done(self):
         for line in self:
