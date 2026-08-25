@@ -1,0 +1,43 @@
+/* Give checklist "section" rows (display_type == 'line_section') a real
+ * heading look instead of just bold text - a shaded, bordered row with
+ * uppercase, letter-spaced text - closer to a table heading than a data
+ * row.
+ *
+ * Multiple selectors are stacked as fallbacks rather than relying on one
+ * guessed class name: decoration-bf/decoration-primary in the view are
+ * compiled by Odoo's list renderer into Bootstrap utility classes
+ * (fw-bold / text-primary) on the <tr>, which is the primary hook; the
+ * :has() rule additionally keys off the hidden "is_done" cell, which is
+ * Odoo's own long-standing o_invisible_modifier class, as a
+ * version-resilient backup. Each rule is purely additive - if a selector
+ * doesn't match anything on a given Odoo point release, it's a no-op
+ * rather than a broken layout.
+ */
+
+.o_checklist_line_list .o_data_row.fw-bold,
+.o_checklist_line_list .o_data_row.text-primary,
+.o_checklist_line_list .o_data_row:has(td[name="is_done"].o_invisible_modifier) {
+    background-color: color-mix(in srgb, var(--bs-body-color, #888) 10%, transparent);
+    border-top: 2px solid color-mix(in srgb, var(--bs-body-color, #888) 25%, transparent);
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-body-color, #888) 15%, transparent);
+}
+
+.o_checklist_line_list .o_data_row.fw-bold td[name="name"],
+.o_checklist_line_list .o_data_row.text-primary td[name="name"],
+.o_checklist_line_list .o_data_row:has(td[name="is_done"].o_invisible_modifier) td[name="name"] {
+    color: inherit !important;
+    font-weight: 700 !important;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    font-size: 0.85em;
+    padding-top: 9px !important;
+    padding-bottom: 9px !important;
+}
+
+/* First section in the list shouldn't show a heavy top border right
+ * under the column headers. */
+.o_checklist_line_list .o_data_row:first-child.fw-bold,
+.o_checklist_line_list .o_data_row:first-child.text-primary,
+.o_checklist_line_list .o_data_row:first-child:has(td[name="is_done"].o_invisible_modifier) {
+    border-top: none;
+}

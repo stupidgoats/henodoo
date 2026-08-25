@@ -65,15 +65,32 @@ model.
 
 - **Structure**: multiple checklists on one task are still a single
   flat `checklist_line_ids` list under the hood — each checklist is a
-  `display_type='line_section'` header row, visually set apart with
-  `decoration-bf` (bold) + `decoration-primary` (tinted background).
-  This was a deliberate choice over giving each checklist its own
-  record/page: it reuses the exact list mechanics already proven to
-  work (drag-reorder, inline add, recurrence reset), with one shared
-  progress bar for the whole task rather than one per checklist. If you
-  later decide you want a separate progress bar per checklist, that's a
-  bigger structural change (a `project.task.checklist` header model with
-  its own page) — ask and I'll scope it.
+  `display_type='line_section'` header row. This was a deliberate choice
+  over giving each checklist its own record/page: it reuses the exact
+  list mechanics already proven to work (drag-reorder, inline add,
+  recurrence reset), with one shared progress bar for the whole task
+  rather than one per checklist. If you later decide you want a separate
+  progress bar per checklist, that's a bigger structural change (a
+  `project.task.checklist` header model with its own page) — ask and
+  I'll scope it.
+- **Section row styling** now comes from a small bundled CSS file
+  (`static/src/css/checklist.css`), not decoration attributes alone.
+  `decoration-bf`/`decoration-primary` in the view still mark section
+  rows semantically (and are what a screen reader / list export sees),
+  but the CSS is what turns them into a shaded, bordered, uppercase
+  heading row — in testing, `decoration-primary` alone rendered as blue
+  link-colored text with no background in Odoo's dark theme, which read
+  as a clickable link, not a heading. The CSS neutralizes that color and
+  adds the actual heading treatment. Because I can't render this against
+  your live instance, the selectors are deliberately stacked as
+  fallbacks (targeting the `fw-bold`/`text-primary` classes Odoo's list
+  renderer is expected to apply, *and* a `:has()` rule keyed off the
+  hidden checklist-checkbox cell as a backup) — each is additive, so if
+  one guess is off for your exact Odoo build, it's a no-op rather than a
+  broken layout, and the others should still carry it. If the heading
+  styling doesn't show up at all after installing, open the section
+  row's checkbox cell in your browser's inspector and tell me what
+  classes are actually on the `<tr>` — that's a 2-minute fix.
 - **Templates are a one-time copy, not a live link**: applying a
   template creates independent lines with no ongoing reference back to
   the template (beyond the section's name). Editing the template later
@@ -96,6 +113,18 @@ model.
 
 ## Changelog
 
+- **v1.2.0**:
+  - Fixed the "Add Checklist from Template" button being invisible on a
+    task with no checklist items yet — it was nested inside the same
+    `invisible="not checklist_total_count"` block as the progress bar,
+    so it never showed up until *something* already existed to make the
+    progress bar meaningful. It's now a sibling, always visible; the
+    progress bar, done count, and "Reset Checklist" stay hidden until
+    there's something to show/reset.
+  - Replaced reliance on `decoration-primary` alone for section styling
+    with a bundled CSS file giving section rows a real shaded/bordered/
+    uppercase heading treatment (see "Section row styling" above for
+    why, and the fallback strategy).
 - **v1.1.0**: Added multiple checklists per task (as named sections in
   the same list) and reusable checklist templates — a new
   `project.checklist.template` model managed under Project ▸
@@ -149,27 +178,30 @@ the xpath/card syntax to match your exact base view.
 
 1. Install the module (`-i project_task_checklist`) on a test database
    with the `project` app installed.
-2. Open a task, go to the **Checklist** tab, add a section and a couple
-   of items, check one off. Confirm the section row is bold with a
-   tinted background, the progress bar and kanban badge update, and
-   there is no assignee/due date column on checklist items.
-3. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
+2. Open a task with **no** checklist items yet and confirm **Add
+   Checklist from Template** is visible on the empty Checklist tab (this
+   was broken in v1.1.0).
+3. Add a section and a couple of items, check one off. Confirm the
+   section row is clearly shaded/bordered/uppercase (not just bold blue
+   text), the progress bar and kanban badge update, and there is no
+   assignee/due date column on checklist items.
+4. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
    template with a name and a few items.
-4. Back on the task, click **Add Checklist from Template**, pick that
+5. Back on the task, click **Add Checklist from Template**, pick that
    template, confirm it adds a new section with the template's items at
    the bottom of the existing checklist (not replacing it). Add a second
    checklist from the same or another template and confirm you now have
    multiple independent sections.
-5. Edit the template's items afterward and confirm the task's
+6. Edit the template's items afterward and confirm the task's
    already-added checklist is unaffected (it's a one-time copy).
-6. As a non-manager project user, confirm you can apply a template to a
+7. As a non-manager project user, confirm you can apply a template to a
    task but cannot edit the template list itself (read-only); as a
    manager, confirm you can create/edit/delete templates.
-7. Enable recurrence on the task (repeat e.g. daily), mark it done so
+8. Enable recurrence on the task (repeat e.g. daily), mark it done so
    the next occurrence is generated (or trigger the recurrence cron
    manually). Open the new occurrence and confirm **every** checklist
    item across **every** section is present but unchecked.
-8. Click **Duplicate** on a task with a partially-checked checklist and
+9. Click **Duplicate** on a task with a partially-checked checklist and
    confirm the copy's checklist is unchecked.
-9. Click **Reset Checklist** on a task with checked items and confirm
-   all items uncheck without creating a new task.
+10. Click **Reset Checklist** on a task with checked items and confirm
+    all items uncheck without creating a new task.

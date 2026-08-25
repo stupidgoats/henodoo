@@ -9,24 +9,27 @@
         <field name="arch" type="xml">
             <page name="description_page" position="after">
                 <page name="checklist_page" string="Checklist">
-                    <div class="d-flex align-items-center mb-2" invisible="not checklist_total_count">
-                        <field name="checklist_progress" widget="progressbar" readonly="1" nolabel="1"
-                               style="width: 240px;"/>
-                        <span class="text-muted ms-3">
-                            <field name="checklist_done_count" readonly="1" nolabel="1" class="oe_inline"/>
-                            /
-                            <field name="checklist_total_count" readonly="1" nolabel="1" class="oe_inline"/>
-                            done
-                        </span>
+                    <div class="d-flex align-items-center mb-2">
+                        <div class="d-flex align-items-center" invisible="not checklist_total_count">
+                            <field name="checklist_progress" widget="progressbar" readonly="1" nolabel="1"
+                                   style="width: 240px;"/>
+                            <span class="text-muted ms-3">
+                                <field name="checklist_done_count" readonly="1" nolabel="1" class="oe_inline"/>
+                                /
+                                <field name="checklist_total_count" readonly="1" nolabel="1" class="oe_inline"/>
+                                done
+                            </span>
+                        </div>
                         <button name="%(project_task_checklist.action_checklist_template_apply)d"
                                 type="action" string="Add Checklist from Template"
                                 class="btn-link ms-auto" context="{'default_task_id': id}"/>
                         <button name="action_reset_checklist" type="object"
                                 string="Reset Checklist" class="btn-link ms-2"
-                                confirm="Uncheck every item on this checklist?"/>
+                                confirm="Uncheck every item on this checklist?"
+                                invisible="not checklist_total_count"/>
                     </div>
                     <field name="checklist_line_ids">
-                        <list editable="bottom"
+                        <list editable="bottom" class="o_checklist_line_list"
                               decoration-bf="display_type == 'line_section'"
                               decoration-primary="display_type == 'line_section'">
                             <field name="sequence" widget="handle"/>

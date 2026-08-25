@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.1.1.0',
+    'version': '18.0.1.2.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, auto-reset on recurrence',
     'description': """
@@ -27,8 +27,8 @@ Features
 * A manual "Reset Checklist" button on the task, for cases where you want
   to re-run a checklist without duplicating the whole task.
 * Multiple checklists per task: a task's checklist is one combined list
-  where each checklist is its own bold, tinted section header - add as
-  many sections as you like, ad hoc, with no setup required.
+  where each checklist is its own shaded, uppercase section heading row
+  - add as many sections as you like, ad hoc, with no setup required.
 * Reusable checklist templates (Project > Configuration > Checklist
   Templates), defined independently of any task. Applying a template to
   a task adds a new section pre-filled with the template's items, via
@@ -54,6 +54,11 @@ to force the "done" state back to False on every copy.
         'views/project_task_checklist_views.xml',
         'views/project_checklist_template_views.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'project_task_checklist/static/src/css/checklist.css',
+        ],
+    },
     'installable': True,
     'application': False,
     'auto_install': False,
