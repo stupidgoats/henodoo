@@ -23,10 +23,21 @@ occurrence of a recurring task.
 - A small **progress indicator on the kanban card** (icon + "n/total" +
   thin progress bar), only shown when a task has checklist items.
 - **Access rights** for `project.group_project_user` and
-  `project.group_project_manager` (full CRUD). Portal access is
-  intentionally not included — add a row to
-  `security/ir.model.access.csv` if portal users should see/edit
-  checklists on their tasks.
+  `project.group_project_manager` (full CRUD on checklist lines and on
+  applying templates; template *definitions* are read-only for regular
+  users and full CRUD for managers, so managers curate the template
+  library and everyone can use it). Portal access is intentionally not
+  included — add rows to `security/ir.model.access.csv` if portal users
+  should see/edit checklists on their tasks.
+- **`project.checklist.template`** / **`project.checklist.template.line`**
+  — a reusable checklist definition, independent of any task. Managed
+  under **Project ▸ Configuration ▸ Checklist Templates**.
+- **`project.checklist.template.apply`** — the wizard behind the task's
+  "Add Checklist from Template" button. Picking a template appends a new
+  section (named after the template) plus one line per template item to
+  that task's checklist. The task's copy is then completely independent
+  — editing it, or checking items off, never touches the template or any
+  other task that applied it.
 
 ## How the recurrence reset works
 
@@ -52,13 +63,23 @@ model.
 
 ## Design notes / things you may want to adjust
 
-- **Structure**: this is the "flat checklist" model (one list of items
-  directly on the task) rather than a reusable-template model. If you
-  later want checklist templates that can be centrally edited and
-  applied to future recurring occurrences, the line model already has
-  the shape (`display_type`, `sequence`) to add an optional
-  `template_line_id` without breaking anything — that would be a
-  separate, additive module/change.
+- **Structure**: multiple checklists on one task are still a single
+  flat `checklist_line_ids` list under the hood — each checklist is a
+  `display_type='line_section'` header row, visually set apart with
+  `decoration-bf` (bold) + `decoration-primary` (tinted background).
+  This was a deliberate choice over giving each checklist its own
+  record/page: it reuses the exact list mechanics already proven to
+  work (drag-reorder, inline add, recurrence reset), with one shared
+  progress bar for the whole task rather than one per checklist. If you
+  later decide you want a separate progress bar per checklist, that's a
+  bigger structural change (a `project.task.checklist` header model with
+  its own page) — ask and I'll scope it.
+- **Templates are a one-time copy, not a live link**: applying a
+  template creates independent lines with no ongoing reference back to
+  the template (beyond the section's name). Editing the template later
+  does not affect tasks that already applied it, and editing a task's
+  checklist never touches the template. If you want a "resync this
+  section from its template" action later, that's an easy follow-up.
 - **Reset scope**: currently *any* copy of a task resets its checklist,
   including a plain manual "Duplicate". If you want recurrence-only
   reset (i.e. manual duplicates keep their checked state), the fix is
@@ -75,6 +96,19 @@ model.
 
 ## Changelog
 
+- **v1.1.0**: Added multiple checklists per task (as named sections in
+  the same list) and reusable checklist templates — a new
+  `project.checklist.template` model managed under Project ▸
+  Configuration ▸ Checklist Templates, plus an "Add Checklist from
+  Template" button/wizard on the task that copies a template's items in
+  as a new section. Ad-hoc sections (no template) still work exactly as
+  before via "Add a section".
+- **v1.0.3**: Fixed section headers not actually rendering bold. The
+  view used `decoration-bold`, which is not a real Odoo attribute (it's
+  silently ignored — no error, it just does nothing). The correct name
+  is `decoration-bf`. Also added `decoration-primary` alongside it, so
+  section rows now get bold text *and* a light background tint, using
+  only built-in, documented Odoo list decorations (no custom CSS/JS).
 - **v1.0.2**: Removed the per-item `user_id` (assignee) and
   `date_deadline` (due date) fields — the task itself already carries
   an assignee and a due date, so per-item versions were redundant.
@@ -116,14 +150,26 @@ the xpath/card syntax to match your exact base view.
 1. Install the module (`-i project_task_checklist`) on a test database
    with the `project` app installed.
 2. Open a task, go to the **Checklist** tab, add a section and a couple
-   of items, check one off. Confirm the progress bar and kanban badge
-   update. Confirm there is no assignee/due date column on checklist
-   items.
-3. Enable recurrence on the task (repeat e.g. daily), mark it done so
+   of items, check one off. Confirm the section row is bold with a
+   tinted background, the progress bar and kanban badge update, and
+   there is no assignee/due date column on checklist items.
+3. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
+   template with a name and a few items.
+4. Back on the task, click **Add Checklist from Template**, pick that
+   template, confirm it adds a new section with the template's items at
+   the bottom of the existing checklist (not replacing it). Add a second
+   checklist from the same or another template and confirm you now have
+   multiple independent sections.
+5. Edit the template's items afterward and confirm the task's
+   already-added checklist is unaffected (it's a one-time copy).
+6. As a non-manager project user, confirm you can apply a template to a
+   task but cannot edit the template list itself (read-only); as a
+   manager, confirm you can create/edit/delete templates.
+7. Enable recurrence on the task (repeat e.g. daily), mark it done so
    the next occurrence is generated (or trigger the recurrence cron
-   manually). Open the new occurrence and confirm the checklist items
-   are present but **all unchecked**.
-4. Click **Duplicate** on a task with a partially-checked checklist and
+   manually). Open the new occurrence and confirm **every** checklist
+   item across **every** section is present but unchecked.
+8. Click **Duplicate** on a task with a partially-checked checklist and
    confirm the copy's checklist is unchecked.
-5. Click **Reset Checklist** on a task with checked items and confirm
+9. Click **Reset Checklist** on a task with checked items and confirm
    all items uncheck without creating a new task.

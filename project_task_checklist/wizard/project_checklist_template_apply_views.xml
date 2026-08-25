@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_checklist_template_apply_form" model="ir.ui.view">
+        <field name="name">project.checklist.template.apply.form</field>
+        <field name="model">project.checklist.template.apply</field>
+        <field name="arch" type="xml">
+            <form string="Add Checklist from Template">
+                <group>
+                    <field name="task_id" invisible="1"/>
+                    <field name="template_id" options="{'no_create': True}"/>
+                </group>
+                <footer>
+                    <button string="Add" type="object" name="action_apply" class="btn-primary"/>
+                    <button string="Cancel" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_checklist_template_apply" model="ir.actions.act_window">
+        <field name="name">Add Checklist from Template</field>
+        <field name="res_model">project.checklist.template.apply</field>
+        <field name="view_mode">form</field>
+        <field name="view_id" ref="view_checklist_template_apply_form"/>
+        <field name="target">new</field>
+    </record>
+
+</odoo>

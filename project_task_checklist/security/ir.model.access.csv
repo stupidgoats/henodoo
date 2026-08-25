@@ -1,3 +1,8 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_project_task_checklist_line_user,project.task.checklist.line.user,model_project_task_checklist_line,project.group_project_user,1,1,1,1
 access_project_task_checklist_line_manager,project.task.checklist.line.manager,model_project_task_checklist_line,project.group_project_manager,1,1,1,1
+access_project_checklist_template_user,project.checklist.template.user,model_project_checklist_template,project.group_project_user,1,0,0,0
+access_project_checklist_template_manager,project.checklist.template.manager,model_project_checklist_template,project.group_project_manager,1,1,1,1
+access_project_checklist_template_line_user,project.checklist.template.line.user,model_project_checklist_template_line,project.group_project_user,1,0,0,0
+access_project_checklist_template_line_manager,project.checklist.template.line.manager,model_project_checklist_template_line,project.group_project_manager,1,1,1,1
+access_project_checklist_template_apply_user,project.checklist.template.apply.user,model_project_checklist_template_apply,project.group_project_user,1,1,1,1
