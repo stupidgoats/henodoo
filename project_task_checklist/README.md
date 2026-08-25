@@ -73,24 +73,28 @@ model.
   progress bar per checklist, that's a bigger structural change (a
   `project.task.checklist` header model with its own page) — ask and
   I'll scope it.
-- **Section row styling** now comes from a small bundled CSS file
+- **Section row styling** comes from a small bundled CSS file
   (`static/src/css/checklist.css`), not decoration attributes alone.
   `decoration-bf`/`decoration-primary` in the view still mark section
-  rows semantically (and are what a screen reader / list export sees),
-  but the CSS is what turns them into a shaded, bordered, uppercase
-  heading row — in testing, `decoration-primary` alone rendered as blue
-  link-colored text with no background in Odoo's dark theme, which read
-  as a clickable link, not a heading. The CSS neutralizes that color and
-  adds the actual heading treatment. Because I can't render this against
-  your live instance, the selectors are deliberately stacked as
-  fallbacks (targeting the `fw-bold`/`text-primary` classes Odoo's list
-  renderer is expected to apply, *and* a `:has()` rule keyed off the
-  hidden checklist-checkbox cell as a backup) — each is additive, so if
-  one guess is off for your exact Odoo build, it's a no-op rather than a
-  broken layout, and the others should still carry it. If the heading
-  styling doesn't show up at all after installing, open the section
-  row's checkbox cell in your browser's inspector and tell me what
-  classes are actually on the `<tr>` — that's a 2-minute fix.
+  rows semantically, but the CSS is what turns them into a shaded,
+  bordered, uppercase heading row — `decoration-primary` alone renders
+  as blue link-colored text with no background in Odoo's dark theme,
+  which reads as a clickable link, not a heading.
+  The CSS selectors target `tr.o_data_row.fw-bold` /
+  `tr.o_data_row.text-primary` (the actual classes Odoo's list renderer
+  puts on the row for those two decorations — confirmed via a live
+  DevTools inspection, not a guess), each additionally qualified with
+  `:has(td[name="is_done"])` so the rule only ever matches rows in a
+  checklist list (the `is_done` field is specific to
+  `project.task.checklist.line`) rather than some unrelated decorated
+  list elsewhere in Odoo. It is deliberately **not** scoped under a
+  wrapper class on the `<list>` tag — that was the original approach,
+  but `class="..."` on a `<list>` embedded inside a one2many field on a
+  form does not reliably get forwarded to any DOM ancestor, so a
+  selector scoped that way silently matched nothing. If styling ever
+  looks off again, open a checklist row in the browser inspector and
+  check the classes actually on the `<tr>` — that's how the fix above
+  was found.
 - **Templates are a one-time copy, not a live link**: applying a
   template creates independent lines with no ongoing reference back to
   the template (beyond the section's name). Editing the template later
@@ -113,6 +117,14 @@ model.
 
 ## Changelog
 
+- **v1.2.1**: Fixed section-row CSS not applying at all. The selectors
+  were scoped under `.o_checklist_line_list`, a class set on the `<list>`
+  tag in the view — but that class doesn't get forwarded to any DOM
+  ancestor when the list is embedded in a one2many field on a form, so
+  every selector silently matched nothing (confirmed via a live DevTools
+  inspection, which also confirmed `fw-bold`/`text-primary` *are* the
+  right classes to target). Rewrote the CSS unscoped, qualified instead
+  by `:has(td[name="is_done"])` so it still only touches checklist rows.
 - **v1.2.0**:
   - Fixed the "Add Checklist from Template" button being invisible on a
     task with no checklist items yet — it was nested inside the same

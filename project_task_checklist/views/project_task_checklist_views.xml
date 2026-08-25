@@ -29,7 +29,7 @@
                                 invisible="not checklist_total_count"/>
                     </div>
                     <field name="checklist_line_ids">
-                        <list editable="bottom" class="o_checklist_line_list"
+                        <list editable="bottom"
                               decoration-bf="display_type == 'line_section'"
                               decoration-primary="display_type == 'line_section'">
                             <field name="sequence" widget="handle"/>
