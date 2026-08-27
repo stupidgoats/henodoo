@@ -96,16 +96,16 @@ model.
   looks off again, open a checklist row in the browser inspector and
   check the classes actually on the `<tr>` — that's how the fix above
   was found.
-- **`section_progress` may lag until you save**: it's computed by
-  scanning the task's other checklist lines (from the section row
-  forward to the next section), which is a *cross-record* dependency.
-  Odoo's editable-list onchange mechanism reliably recomputes a field
-  when something *it* depends on changes on the *same* row, but a
-  section row's count depends on its sibling item rows — in some cases
-  that only refreshes on save/reload rather than the instant you check
-  a box. If that's the case for you and it's annoying in practice, it's
-  fixable (either an explicit onchange trigger from the item side, or
-  computing it server-side on open) — let me know how it behaves.
+- **`section_progress` updates live via an explicit onchange, not just
+  the compute's dependency graph**: its count is a *cross-record*
+  computation (a section row's total depends on its sibling item rows),
+  and Odoo's client-side onchange only reliably re-triggers a field's
+  own compute for the row actually being edited — not for sibling rows
+  whose compute merely depends on it. So `_onchange_is_done` explicitly
+  calls the same grouping logic (`_refresh_section_progress`) every time
+  an item is checked, in addition to the normal `@api.depends`-driven
+  compute (which still runs on load/save). Both share one helper so
+  there's only one place the grouping logic lives.
 - **Templates are a one-time copy, not a live link**: applying a
   template creates independent lines with no ongoing reference back to
   the template (beyond the section's name). Editing the template later
@@ -128,6 +128,13 @@ model.
 
 ## Changelog
 
+- **v1.3.1**: Fixed `section_progress` only updating on save instead of
+  live as items are checked (confirmed via testing that the task-level
+  progress bar *did* update live, pinpointing this as a cross-record
+  compute limitation, not a general bug). `_onchange_is_done` now
+  explicitly refreshes the affected section's count via a shared helper,
+  rather than relying solely on the dependency graph to propagate the
+  change to a sibling row.
 - **v1.3.0**: Four refinements based on visual testing feedback (the
   shading/border/color from v1.2.2 was confirmed working):
   - Stronger section contrast (higher-opacity background/border tint).
