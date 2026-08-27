@@ -31,6 +31,35 @@ class ProjectTaskChecklistLine(models.Model):
     done_date = fields.Datetime(
         string='Done on', readonly=True, copy=False)
 
+    section_progress = fields.Char(
+        string='Section Progress', compute='_compute_section_progress',
+        help="For a section row only: how many of the items under this "
+             "section are done, e.g. '2/5'.")
+
+    @api.depends(
+        'display_type', 'sequence',
+        'task_id.checklist_line_ids.display_type',
+        'task_id.checklist_line_ids.is_done',
+        'task_id.checklist_line_ids.sequence',
+    )
+    def _compute_section_progress(self):
+        for line in self:
+            line.section_progress = False
+            if line.display_type != 'line_section' or not line.task_id:
+                continue
+            siblings = line.task_id.checklist_line_ids.sorted(
+                lambda l: (l.sequence, l.id))
+            ids = siblings.ids
+            if line.id not in ids:
+                continue
+            items = self.browse()
+            for sibling in siblings[ids.index(line.id) + 1:]:
+                if sibling.display_type == 'line_section':
+                    break
+                items |= sibling
+            line.section_progress = '%d/%d' % (
+                len(items.filtered('is_done')), len(items))
+
     @api.onchange('is_done')
     def _onchange_is_done(self):
         for line in self:

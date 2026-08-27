@@ -36,6 +36,9 @@
                             <field name="display_type" column_invisible="1"/>
                             <field name="is_done" invisible="display_type == 'line_section'"/>
                             <field name="name" placeholder="Section title or checklist item..."/>
+                            <field name="section_progress" string=""
+                                   invisible="display_type != 'line_section'"
+                                   class="text-muted"/>
                             <field name="done_by" column_invisible="1"/>
                             <field name="done_date" column_invisible="1"/>
                             <control>

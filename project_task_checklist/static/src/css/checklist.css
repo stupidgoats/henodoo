@@ -1,34 +1,33 @@
 /* Give checklist "section" rows (display_type == 'line_section') a real
- * heading look instead of just bold blue text - a shaded, bordered row
- * with uppercase, letter-spaced text - closer to a table heading than a
- * data row.
+ * heading look - a shaded, bordered row with uppercase, letter-spaced
+ * text - and indent the checkable items under them, closer to a
+ * grouped to-do list than a flat table.
  *
- * Not scoped under a wrapper class: putting class="o_checklist_line_list"
- * on the <list> tag does not reliably forward that class to any DOM
- * ancestor when the list is embedded inside a one2many field on a form
- * (confirmed via DevTools - it never showed up as a matched rule).
- * Instead, each selector is qualified by :has(td[name="is_done"]) - the
- * is_done field only exists on project.task.checklist.line, so this
- * still only ever matches OUR checklist list, not some unrelated
- * decorated list elsewhere in Odoo, without depending on a class landing
- * somewhere I can't verify.
+ * Not scoped under a wrapper class: putting class="..." on the <list>
+ * tag does not reliably forward that class to any DOM ancestor when the
+ * list is embedded inside a one2many field on a form (confirmed via
+ * DevTools - it never showed up as a matched rule). Instead, each
+ * selector is qualified by :has(td[name="is_done"]) - the is_done field
+ * only exists on project.task.checklist.line, so this still only ever
+ * matches OUR checklist list, not some unrelated decorated list
+ * elsewhere in Odoo.
  *
  * fw-bold / text-primary are the actual classes Odoo's list renderer
  * puts on the <tr> for decoration-bf / decoration-primary in the view -
- * confirmed via DevTools inspection, not a guess.
- *
- * background-color/border are applied to the <td> cells, not the <tr>:
- * browsers generally do not render background/border set directly on a
- * table row, only on its cells - confirmed by testing, where uppercase/
- * bold on the name cell worked immediately but shading and the border
- * on the row did not show up at all.
+ * confirmed via DevTools inspection, not a guess. background-color and
+ * border are applied to the <td> cells, not the <tr>, because browsers
+ * generally do not render background/border set directly on a table
+ * row - confirmed by testing (uppercase/bold worked immediately;
+ * row-level background/border did not, until moved to the cells).
  */
+
+/* --- Section header rows --- */
 
 tr.o_data_row:has(td[name="is_done"]).fw-bold > td,
 tr.o_data_row:has(td[name="is_done"]).text-primary > td {
-    background-color: color-mix(in srgb, var(--bs-body-color, #888) 14%, transparent) !important;
-    border-top: 2px solid color-mix(in srgb, var(--bs-body-color, #888) 35%, transparent) !important;
-    border-bottom: 1px solid color-mix(in srgb, var(--bs-body-color, #888) 18%, transparent) !important;
+    background-color: color-mix(in srgb, var(--bs-body-color, #888) 22%, transparent) !important;
+    border-top: 2px solid color-mix(in srgb, var(--bs-body-color, #888) 45%, transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-body-color, #888) 25%, transparent) !important;
 }
 
 tr.o_data_row:has(td[name="is_done"]).fw-bold td[name="name"],
@@ -47,9 +46,34 @@ tr.o_data_row:has(td[name="is_done"]).text-primary td[name="name"] {
     padding-bottom: 10px !important;
 }
 
+tr.o_data_row:has(td[name="is_done"]).fw-bold td[name="section_progress"],
+tr.o_data_row:has(td[name="is_done"]).text-primary td[name="section_progress"] {
+    color: var(--bs-body-color, #dddddd) !important;
+    font-weight: 700 !important;
+    font-size: 0.8em !important;
+    text-align: end;
+    opacity: 0.75;
+}
+
 /* The first section in the list shouldn't show a heavy top border right
  * under the column headers. */
 tr.o_data_row:first-child:has(td[name="is_done"]).fw-bold > td,
 tr.o_data_row:first-child:has(td[name="is_done"]).text-primary > td {
     border-top: none !important;
+}
+
+/* --- Checklist item rows: indent under their section, and make the
+ * checkbox itself clearly visible against a dark theme. --- */
+
+tr.o_data_row:has(td[name="is_done"]):not(.fw-bold):not(.text-primary) td[name="name"] {
+    padding-left: 28px !important;
+}
+
+tr.o_data_row:has(td[name="is_done"]):not(.fw-bold):not(.text-primary) td[name="is_done"] {
+    padding-left: 20px !important;
+}
+
+td[name="is_done"] input[type="checkbox"] {
+    border-width: 2px !important;
+    border-color: color-mix(in srgb, var(--bs-body-color, #aaa) 55%, transparent) !important;
 }

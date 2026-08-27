@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.1.2.2',
+    'version': '18.0.1.3.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, auto-reset on recurrence',
     'description': """

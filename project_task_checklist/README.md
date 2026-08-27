@@ -10,9 +10,10 @@ occurrence of a recurring task.
 - **`project.task.checklist.line`** — one record per checklist row.
   Fields: `task_id`, `sequence`, `display_type` (blank = normal item,
   `line_section` = non-checkable section header), `name`, `is_done`,
-  `done_by` / `done_date` (auto-stamped when an item is checked). No
-  per-item assignee or due date — the task's own `user_ids` and
-  `date_deadline` cover that.
+  `done_by` / `done_date` (auto-stamped when an item is checked),
+  `section_progress` (computed, section rows only — `"2/5"`-style count
+  of that section's items). No per-item assignee or due date — the
+  task's own `user_ids` and `date_deadline` cover that.
 - **`project.task`** extension — `checklist_line_ids` (One2many),
   computed `checklist_total_count` / `checklist_done_count` /
   `checklist_progress`, and an `action_reset_checklist()` method wired to
@@ -95,6 +96,16 @@ model.
   looks off again, open a checklist row in the browser inspector and
   check the classes actually on the `<tr>` — that's how the fix above
   was found.
+- **`section_progress` may lag until you save**: it's computed by
+  scanning the task's other checklist lines (from the section row
+  forward to the next section), which is a *cross-record* dependency.
+  Odoo's editable-list onchange mechanism reliably recomputes a field
+  when something *it* depends on changes on the *same* row, but a
+  section row's count depends on its sibling item rows — in some cases
+  that only refreshes on save/reload rather than the instant you check
+  a box. If that's the case for you and it's annoying in practice, it's
+  fixable (either an explicit onchange trigger from the item side, or
+  computing it server-side on open) — let me know how it behaves.
 - **Templates are a one-time copy, not a live link**: applying a
   template creates independent lines with no ongoing reference back to
   the template (beyond the section's name). Editing the template later
@@ -117,6 +128,16 @@ model.
 
 ## Changelog
 
+- **v1.3.0**: Four refinements based on visual testing feedback (the
+  shading/border/color from v1.2.2 was confirmed working):
+  - Stronger section contrast (higher-opacity background/border tint).
+  - Checklist items are now indented under their section (both the name
+    and the checkbox), so the grouping reads visually, not just by color.
+  - Added `section_progress`, a computed `"done/total"` count shown in
+    place of the (hidden) checkbox on section rows — see the design note
+    on it above for a caveat on when it refreshes.
+  - The `is_done` checkbox now gets a thicker, higher-contrast border so
+    it's visible against a dark theme.
 - **v1.2.2**: Fixed two more section-row CSS bugs found via testing:
   uppercase/bold text was showing (confirming the selectors *do* match),
   but the shaded background and top border weren't, and the text was
@@ -204,9 +225,11 @@ the xpath/card syntax to match your exact base view.
 2. Open a task with **no** checklist items yet and confirm **Add
    Checklist from Template** is visible on the empty Checklist tab (this
    was broken in v1.1.0).
-3. Add a section and a couple of items, check one off. Confirm the
-   section row is clearly shaded/bordered/uppercase (not just bold blue
-   text), the progress bar and kanban badge update, and there is no
+3. Add a section and a couple of items, check one off. Confirm: the
+   section row is clearly shaded/bordered/uppercase; the items are
+   visibly indented under it; the checkbox has a clearly visible border;
+   the section row shows a `"done/total"` count where the checkbox would
+   be; the progress bar and kanban badge update; there is no
    assignee/due date column on checklist items.
 4. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
    template with a name and a few items.
