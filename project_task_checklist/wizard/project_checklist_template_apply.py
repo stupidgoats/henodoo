@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-from odoo import api, fields, models
+from odoo import fields, models
 
 
 class ProjectChecklistTemplateApply(models.TransientModel):
     """Wizard behind the task's 'Add Checklist from Template' button.
-    Copies a project.checklist.template's items onto the task as a new
-    section (a display_type='line_section' line, named after the
-    template) followed by one item line per template line, appended to
-    the end of the task's checklist_line_ids."""
+    Creates a new project.task.checklist on the task, named after the
+    template, with one item line per template line - then opens that new
+    checklist's own page."""
     _name = 'project.checklist.template.apply'
     _description = 'Add Checklist From Template'
 
@@ -20,27 +19,22 @@ class ProjectChecklistTemplateApply(models.TransientModel):
 
     def action_apply(self):
         self.ensure_one()
-        line_model = self.env['project.task.checklist.line']
-        existing_sequences = self.task_id.checklist_line_ids.mapped('sequence')
-        next_sequence = (max(existing_sequences) + 10) if existing_sequences else 10
-
-        line_model.create({
+        checklist = self.env['project.task.checklist'].create({
             'task_id': self.task_id.id,
-            'display_type': 'line_section',
             'name': self.template_id.name,
-            'sequence': next_sequence,
+            'template_id': self.template_id.id,
         })
-        next_sequence += 10
-
-        item_vals_list = []
-        for template_line in self.template_id.line_ids.sorted('sequence'):
-            item_vals_list.append({
-                'task_id': self.task_id.id,
+        if self.template_id.line_ids:
+            self.env['project.task.checklist.line'].create([{
+                'checklist_id': checklist.id,
                 'name': template_line.name,
-                'sequence': next_sequence,
-            })
-            next_sequence += 10
-        if item_vals_list:
-            line_model.create(item_vals_list)
+                'sequence': template_line.sequence,
+            } for template_line in self.template_id.line_ids.sorted('sequence')])
 
-        return {'type': 'ir.actions.act_window_close'}
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': 'project.task.checklist',
+            'res_id': checklist.id,
+            'view_mode': 'form',
+            'target': 'current',
+        }

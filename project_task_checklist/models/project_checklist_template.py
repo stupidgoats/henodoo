@@ -5,8 +5,9 @@ from odoo import api, fields, models
 class ProjectChecklistTemplate(models.Model):
     """A reusable checklist definition, independent of any task. Applied to
     a task via the 'Add Checklist from Template' wizard (see
-    project.checklist.template.apply), which copies its items onto the
-    task as a new section in project.task.checklist_line_ids."""
+    project.checklist.template.apply), which creates a new
+    project.task.checklist on the task and copies this template's items
+    onto it."""
     _name = 'project.checklist.template'
     _description = 'Checklist Template'
     _order = 'name'

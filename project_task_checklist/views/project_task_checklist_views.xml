@@ -1,6 +1,54 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
+    <!-- Own form view for a single checklist. Used both as the popup shown
+         when clicking into a checklist from the task's Checklist tab, and
+         as the "Add a line" quick-create dialog. Because a checklist's
+         items (line_ids) are its own direct children here, the done/total
+         counts recompute live as items are checked - the same reliable
+         pattern the task-level progress bar already relies on. -->
+    <record id="view_task_checklist_form" model="ir.ui.view">
+        <field name="name">project.task.checklist.form</field>
+        <field name="model">project.task.checklist</field>
+        <field name="arch" type="xml">
+            <form string="Checklist">
+                <sheet>
+                    <field name="task_id" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1>
+                            <field name="name" placeholder="e.g. QA Checklist"/>
+                        </h1>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <field name="progress" widget="progressbar" readonly="1" nolabel="1"
+                               style="width: 240px;"/>
+                        <span class="text-muted ms-3">
+                            <field name="progress_label" readonly="1" nolabel="1" class="oe_inline"/>
+                            done
+                        </span>
+                        <button name="action_reset_checklist" type="object"
+                                string="Reset Checklist" class="btn-link ms-auto"
+                                confirm="Uncheck every item on this checklist?"
+                                invisible="not total_count"/>
+                    </div>
+                    <field name="line_ids">
+                        <list editable="bottom">
+                            <field name="sequence" widget="handle"/>
+                            <field name="is_done"/>
+                            <field name="name" placeholder="Checklist item..."/>
+                            <field name="done_by" column_invisible="1"/>
+                            <field name="done_date" column_invisible="1"/>
+                            <control>
+                                <create string="Add a checklist item"/>
+                            </control>
+                        </list>
+                    </field>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
     <!-- Add a "Checklist" tab to the task form -->
     <record id="view_task_form2_inherit_checklist" model="ir.ui.view">
         <field name="name">project.task.form.checklist</field>
@@ -24,27 +72,18 @@
                                 type="action" string="Add Checklist from Template"
                                 class="btn-link ms-auto" context="{'default_task_id': id}"/>
                         <button name="action_reset_checklist" type="object"
-                                string="Reset Checklist" class="btn-link ms-2"
-                                confirm="Uncheck every item on this checklist?"
+                                string="Reset All Checklists" class="btn-link ms-2"
+                                confirm="Uncheck every item across every checklist on this task?"
                                 invisible="not checklist_total_count"/>
                     </div>
-                    <field name="checklist_line_ids">
-                        <list editable="bottom"
-                              decoration-bf="display_type == 'line_section'"
-                              decoration-primary="display_type == 'line_section'">
+                    <field name="checklist_ids">
+                        <list>
                             <field name="sequence" widget="handle"/>
-                            <field name="display_type" column_invisible="1"/>
-                            <field name="is_done" invisible="display_type == 'line_section'"/>
-                            <field name="name" placeholder="Section title or checklist item..."/>
-                            <field name="section_progress" string=""
-                                   invisible="display_type != 'line_section'"
-                                   class="text-muted"/>
-                            <field name="done_by" column_invisible="1"/>
-                            <field name="done_date" column_invisible="1"/>
+                            <field name="name"/>
+                            <field name="progress_label" string="Done"/>
+                            <field name="progress" widget="progressbar"/>
                             <control>
-                                <create string="Add a checklist item"/>
-                                <create string="Add a section"
-                                        context="{'default_display_type': 'line_section'}"/>
+                                <create string="Add a checklist"/>
                             </control>
                         </list>
                     </field>
