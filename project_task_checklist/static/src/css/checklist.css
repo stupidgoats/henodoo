@@ -16,28 +16,40 @@
  * fw-bold / text-primary are the actual classes Odoo's list renderer
  * puts on the <tr> for decoration-bf / decoration-primary in the view -
  * confirmed via DevTools inspection, not a guess.
+ *
+ * background-color/border are applied to the <td> cells, not the <tr>:
+ * browsers generally do not render background/border set directly on a
+ * table row, only on its cells - confirmed by testing, where uppercase/
+ * bold on the name cell worked immediately but shading and the border
+ * on the row did not show up at all.
  */
 
-tr.o_data_row:has(td[name="is_done"]).fw-bold,
-tr.o_data_row:has(td[name="is_done"]).text-primary {
-    background-color: color-mix(in srgb, var(--bs-body-color, #888) 12%, transparent) !important;
-    border-top: 2px solid color-mix(in srgb, var(--bs-body-color, #888) 30%, transparent);
+tr.o_data_row:has(td[name="is_done"]).fw-bold > td,
+tr.o_data_row:has(td[name="is_done"]).text-primary > td {
+    background-color: color-mix(in srgb, var(--bs-body-color, #888) 14%, transparent) !important;
+    border-top: 2px solid color-mix(in srgb, var(--bs-body-color, #888) 35%, transparent) !important;
+    border-bottom: 1px solid color-mix(in srgb, var(--bs-body-color, #888) 18%, transparent) !important;
 }
 
 tr.o_data_row:has(td[name="is_done"]).fw-bold td[name="name"],
 tr.o_data_row:has(td[name="is_done"]).text-primary td[name="name"] {
-    color: inherit !important;
+    /* An explicit color, not "inherit" - inherit just re-copies the
+     * parent's own text-primary color (the purple/blue), it doesn't
+     * reset it. --bs-body-color is Bootstrap 5's normal text color
+     * variable, so this matches ordinary (non-link) text in either
+     * theme. */
+    color: var(--bs-body-color, #dddddd) !important;
     font-weight: 700 !important;
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .05em;
     font-size: 0.85em !important;
-    padding-top: 9px !important;
-    padding-bottom: 9px !important;
+    padding-top: 10px !important;
+    padding-bottom: 10px !important;
 }
 
 /* The first section in the list shouldn't show a heavy top border right
  * under the column headers. */
-tr.o_data_row:has(td[name="is_done"]).fw-bold:first-child,
-tr.o_data_row:has(td[name="is_done"]).text-primary:first-child {
-    border-top: none;
+tr.o_data_row:first-child:has(td[name="is_done"]).fw-bold > td,
+tr.o_data_row:first-child:has(td[name="is_done"]).text-primary > td {
+    border-top: none !important;
 }

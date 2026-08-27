@@ -117,6 +117,17 @@ model.
 
 ## Changelog
 
+- **v1.2.2**: Fixed two more section-row CSS bugs found via testing:
+  uppercase/bold text was showing (confirming the selectors *do* match),
+  but the shaded background and top border weren't, and the text was
+  still purple instead of neutral. Cause #1: `background-color`/`border`
+  were set on the `<tr>` — browsers generally don't render background or
+  border set directly on a table row, only on its `<td>` cells, so both
+  rules were silently inert; moved them onto the cells. Cause #2: the
+  text color rule used `color: inherit`, which just re-copies the
+  parent's already-purple `text-primary` color rather than resetting it;
+  changed to an explicit `var(--bs-body-color)` (Bootstrap 5's normal
+  text-color variable) instead.
 - **v1.2.1**: Fixed section-row CSS not applying at all. The selectors
   were scoped under `.o_checklist_line_list`, a class set on the `<list>`
   tag in the view — but that class doesn't get forwarded to any DOM
