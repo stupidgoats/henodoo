@@ -45,23 +45,34 @@ class ProjectTaskChecklist(models.Model):
     total_count = fields.Integer(
         string='Items', compute='_compute_progress')
     done_count = fields.Integer(
-        string='Items Done', compute='_compute_progress')
+        string='Items Complete', compute='_compute_progress')
+    not_needed_count = fields.Integer(
+        string='Items Not Needed', compute='_compute_progress')
+    pending_count = fields.Integer(
+        string='Items Pending', compute='_compute_progress')
     progress = fields.Float(
-        string='Progress', compute='_compute_progress')
+        string='Progress', compute='_compute_progress',
+        help="Percentage of items resolved - either Complete or Not "
+             "Needed - out of the total.")
     progress_label = fields.Char(
         string='Progress Label', compute='_compute_progress',
-        help="'done/total' as text, e.g. '2/5'.")
+        help="'resolved/total' as text, e.g. '2/5'.")
 
-    @api.depends('line_ids.is_done')
+    @api.depends('line_ids.state')
     def _compute_progress(self):
         for checklist in self:
-            total = len(checklist.line_ids)
-            done = len(checklist.line_ids.filtered('is_done'))
+            lines = checklist.line_ids
+            total = len(lines)
+            done = len(lines.filtered(lambda l: l.state == 'done'))
+            not_needed = len(lines.filtered(lambda l: l.state == 'not_needed'))
+            resolved = done + not_needed
             checklist.total_count = total
             checklist.done_count = done
-            checklist.progress = (done / total * 100.0) if total else 0.0
-            checklist.progress_label = '%d/%d' % (done, total)
+            checklist.not_needed_count = not_needed
+            checklist.pending_count = total - resolved
+            checklist.progress = (resolved / total * 100.0) if total else 0.0
+            checklist.progress_label = '%d/%d' % (resolved, total)
 
     def action_reset_checklist(self):
-        """Uncheck every item on this checklist."""
-        self.line_ids.write({'is_done': False})
+        """Set every item on this checklist back to Pending."""
+        self.line_ids.write({'state': 'pending'})

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="project_task_checklist.ChecklistAccordionField" owl="1">
+        <div class="o_checklist_accordion">
+
+            <t t-if="!taskId">
+                <p class="text-muted fst-italic mb-0">
+                    Save the task first, then you can add checklists here.
+                </p>
+            </t>
+
+            <t t-elif="state.loading">
+                <p class="text-muted mb-0">Loading checklists…</p>
+            </t>
+
+            <t t-else="">
+                <div class="d-flex align-items-center mb-3" t-if="totalCount">
+                    <div class="o_checklist_progress_track" style="width: 200px;">
+                        <div class="o_checklist_progress_bar" t-attf-style="width: {{overallProgress}}%;"/>
+                    </div>
+                    <span class="o_checklist_state_summary text-muted ms-3">
+                        <span class="text-success" t-if="doneCount">
+                            <i class="fa fa-check-square-o"/> <t t-esc="doneCount"/> complete
+                        </span>
+                        <span t-if="notNeededCount">
+                            <i class="fa fa-minus-square-o"/> <t t-esc="notNeededCount"/> not needed
+                        </span>
+                        <span t-if="pendingCount">
+                            <i class="fa fa-square-o"/> <t t-esc="pendingCount"/> pending
+                        </span>
+                    </span>
+                    <button class="btn btn-link ms-auto p-0" t-on-click="resetAll">
+                        Reset All Checklists
+                    </button>
+                </div>
+
+                <p t-if="!state.checklists.length" class="text-muted fst-italic">
+                    No checklists yet - add one below.
+                </p>
+
+                <div t-foreach="state.checklists" t-as="checklist" t-key="checklist.id"
+                     class="o_checklist_group mb-2">
+
+                    <div class="o_checklist_group_header d-flex align-items-center">
+                        <i t-attf-class="o_checklist_caret fa {{ isExpanded(checklist.id) ? 'fa-caret-down' : 'fa-caret-right' }}"
+                           t-on-click="() => this.toggle(checklist.id)"/>
+                        <input type="text" t-model="checklist.name"
+                               class="o_checklist_group_name"
+                               t-on-change="(ev) => this.renameChecklist(checklist, ev.target.value)"/>
+                        <span class="text-muted small mx-3 flex-shrink-0"
+                              t-esc="checklist.progress_label + ' resolved'"/>
+                        <div class="o_checklist_progress_track flex-shrink-0" style="width: 100px;">
+                            <div class="o_checklist_progress_bar"
+                                 t-attf-style="width: {{checklist.progress}}%;"/>
+                        </div>
+                        <span class="o_checklist_group_actions flex-shrink-0 ms-2">
+                            <i class="fa fa-chevron-up" title="Move up"
+                               t-on-click="() => this.moveChecklist(checklist, -1)"/>
+                            <i class="fa fa-chevron-down" title="Move down"
+                               t-on-click="() => this.moveChecklist(checklist, 1)"/>
+                            <i class="fa fa-trash-o text-danger" title="Delete checklist"
+                               t-on-click="() => this.deleteChecklist(checklist)"/>
+                        </span>
+                    </div>
+
+                    <div class="o_checklist_items" t-if="isExpanded(checklist.id)">
+                        <div t-foreach="checklist.lines" t-as="item" t-key="item.id"
+                             t-attf-class="o_checklist_item o_checklist_item_{{item.state}} d-flex align-items-center">
+                            <i t-attf-class="o_checklist_state_icon fa {{ item.state === 'done' ? 'fa-check-square-o text-success' : item.state === 'not_needed' ? 'fa-minus-square-o text-muted' : 'fa-square-o' }}"
+                               t-attf-title="{{ item.state === 'done' ? 'Complete' : item.state === 'not_needed' ? 'Not Needed' : 'Pending' }} - click to change"
+                               t-on-click="() => this.cycleItemState(item)"/>
+                            <input type="text" t-model="item.name"
+                                   t-attf-class="o_checklist_item_name {{ isResolved(item) ? 'text-decoration-line-through text-muted' : '' }}"
+                                   t-on-change="(ev) => this.renameItem(item, ev.target.value)"/>
+                            <span t-attf-class="o_checklist_state_label flex-shrink-0 small {{ item.state === 'done' ? 'text-success' : item.state === 'not_needed' ? 'text-muted' : 'text-info' }}"
+                                  t-esc="item.state === 'done' ? 'Complete' : item.state === 'not_needed' ? 'Not needed' : 'Pending'"/>
+                            <span class="o_checklist_group_actions flex-shrink-0 ms-2">
+                                <i class="fa fa-chevron-up" title="Move up"
+                                   t-on-click="() => this.moveItem(checklist, item, -1)"/>
+                                <i class="fa fa-chevron-down" title="Move down"
+                                   t-on-click="() => this.moveItem(checklist, item, 1)"/>
+                                <i class="fa fa-trash-o text-danger" title="Delete item"
+                                   t-on-click="() => this.deleteItem(item)"/>
+                            </span>
+                        </div>
+                        <div class="o_checklist_item d-flex align-items-center">
+                            <i class="fa fa-plus text-muted"/>
+                            <input type="text" placeholder="Add an item…"
+                                   class="o_checklist_item_name"
+                                   t-model="state.newItemName[checklist.id]"
+                                   t-on-keydown="(ev) => this.onItemKeydown(ev, checklist)"/>
+                            <button class="btn btn-link btn-sm p-0 ms-2"
+                                    t-on-click="() => this.addItem(checklist)">Add</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center mt-3 gap-2">
+                    <input type="text" placeholder="New checklist name…"
+                           class="o_checklist_new_input flex-grow-1"
+                           t-model="state.newChecklistName"
+                           t-on-keydown="onChecklistKeydown"/>
+                    <button class="btn btn-link p-0" t-on-click="addChecklist">Add a checklist</button>
+                    <select class="form-select form-select-sm ms-2" style="width: auto;"
+                            t-on-change="onTemplateSelect" t-if="state.templates.length">
+                        <option value="">From template…</option>
+                        <option t-foreach="state.templates" t-as="tpl" t-key="tpl.id"
+                                t-att-value="tpl.id" t-esc="tpl.name"/>
+                    </select>
+                </div>
+            </t>
+        </div>
+    </t>
+
+</templates>

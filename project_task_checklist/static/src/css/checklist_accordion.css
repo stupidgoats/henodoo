@@ -1,0 +1,132 @@
+/* Styling for the checklist accordion widget (checklist_accordion_field.js).
+ * Every selector below targets a class this module's own template sets
+ * directly on the element it styles - not an ancestor/inherited class from
+ * Odoo's list renderer - so there is no risk of the class-not-forwarded
+ * problem that affected the old CSS-based section styling. */
+
+.o_checklist_accordion .o_checklist_group {
+    border: 1px solid var(--border-color, rgba(127, 127, 127, 0.3));
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.o_checklist_accordion .o_checklist_group_header {
+    padding: 8px 10px;
+    background-color: rgba(127, 127, 127, 0.12);
+    cursor: default;
+}
+
+.o_checklist_accordion .o_checklist_caret {
+    cursor: pointer;
+    width: 16px;
+    text-align: center;
+    color: var(--bs-body-color, inherit);
+    opacity: 0.7;
+    margin-right: 8px;
+}
+
+.o_checklist_accordion .o_checklist_group_name {
+    border: none;
+    background: transparent;
+    font-weight: bold;
+    color: var(--bs-body-color, inherit);
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.o_checklist_accordion .o_checklist_group_name:focus,
+.o_checklist_accordion .o_checklist_item_name:focus,
+.o_checklist_accordion .o_checklist_new_input:focus {
+    outline: none;
+    background-color: rgba(127, 127, 127, 0.15);
+}
+
+.o_checklist_accordion .o_checklist_progress_track {
+    height: 6px;
+    border-radius: 3px;
+    background-color: rgba(127, 127, 127, 0.25);
+    overflow: hidden;
+}
+
+.o_checklist_accordion .o_checklist_progress_bar {
+    height: 100%;
+    background-color: var(--bs-success, #28a745);
+    border-radius: 3px;
+}
+
+.o_checklist_accordion .o_checklist_group_actions {
+    white-space: nowrap;
+}
+
+.o_checklist_accordion .o_checklist_group_actions .fa {
+    cursor: pointer;
+    opacity: 0.55;
+    margin-left: 8px;
+    color: var(--bs-body-color, inherit);
+}
+
+.o_checklist_accordion .o_checklist_group_actions .fa:hover {
+    opacity: 1;
+}
+
+.o_checklist_accordion .o_checklist_group_actions .fa-trash-o:hover {
+    opacity: 1;
+}
+
+.o_checklist_accordion .o_checklist_items {
+    padding: 6px 10px 10px 34px;
+}
+
+.o_checklist_accordion .o_checklist_item {
+    padding: 3px 0;
+}
+
+.o_checklist_accordion .o_checklist_state_icon {
+    cursor: pointer;
+    width: 18px;
+    text-align: center;
+    margin-right: 8px;
+    font-size: 15px;
+    color: var(--bs-body-color, inherit);
+    opacity: 0.8;
+}
+
+.o_checklist_accordion .o_checklist_state_icon:hover {
+    opacity: 1;
+}
+
+.o_checklist_accordion .o_checklist_state_label {
+    white-space: nowrap;
+    margin-left: 6px;
+    min-width: 72px;
+    text-align: right;
+}
+
+.o_checklist_accordion .o_checklist_state_summary > span {
+    margin-right: 12px;
+    white-space: nowrap;
+}
+
+.o_checklist_accordion .o_checklist_state_summary > span:last-child {
+    margin-right: 0;
+}
+
+.o_checklist_accordion .o_checklist_item_name {
+    border: none;
+    background: transparent;
+    color: var(--bs-body-color, inherit);
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+}
+
+.o_checklist_accordion .o_checklist_new_input {
+    border: none;
+    border-bottom: 1px dashed rgba(127, 127, 127, 0.4);
+    background: transparent;
+    color: var(--bs-body-color, inherit);
+    padding: 2px 4px;
+}

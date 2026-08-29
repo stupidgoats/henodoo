@@ -3,10 +3,17 @@ from odoo import fields, models
 
 
 class ProjectChecklistTemplateApply(models.TransientModel):
-    """Wizard behind the task's 'Add Checklist from Template' button.
-    Creates a new project.task.checklist on the task, named after the
-    template, with one item line per template line - then opens that new
-    checklist's own page."""
+    """Server-side logic behind the "From template" picker on a task's
+    Checklist tab. Creates a new project.task.checklist on the task, named
+    after the template, with one item line per template line.
+
+    This model has no view of its own - the Checklist tab's JS widget
+    (checklist_accordion_field.js) creates a record of this wizard and
+    calls action_apply() on it directly via the ORM, then re-fetches the
+    task's checklists itself. No dialog is opened and no navigation
+    happens; the return value below is unused by that caller and is only
+    there in case something else ever invokes this the traditional way
+    (button + window action)."""
     _name = 'project.checklist.template.apply'
     _description = 'Add Checklist From Template'
 

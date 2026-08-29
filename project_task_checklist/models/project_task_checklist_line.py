@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models
 
+RESOLVED_STATES = ('done', 'not_needed')
+
 
 class ProjectTaskChecklistLine(models.Model):
     _name = 'project.task.checklist.line'
@@ -20,52 +22,63 @@ class ProjectTaskChecklistLine(models.Model):
     sequence = fields.Integer(default=10)
     name = fields.Char(required=True)
 
-    is_done = fields.Boolean(string='Done')
-    done_by = fields.Many2one(
-        'res.users', string='Done by', readonly=True, copy=False)
-    done_date = fields.Datetime(
-        string='Done on', readonly=True, copy=False)
+    state = fields.Selection(
+        [('pending', 'Pending'),
+         ('done', 'Complete'),
+         ('not_needed', 'Not Needed')],
+        string='Status', default='pending', required=True,
+        help="Pending: not done yet. Complete: the work was done. Not "
+             "Needed: turned out not to apply to this task - counted as "
+             "resolved (it no longer needs anyone's attention) but kept "
+             "separate from Complete so it's clear at a glance which "
+             "items were actually done versus skipped.")
+    resolved_by = fields.Many2one(
+        'res.users', string='Resolved by', readonly=True, copy=False,
+        help="Who last marked this item Complete or Not Needed.")
+    resolved_date = fields.Datetime(
+        string='Resolved on', readonly=True, copy=False)
 
-    @api.onchange('is_done')
-    def _onchange_is_done(self):
+    @api.onchange('state')
+    def _onchange_state(self):
         for line in self:
-            if line.is_done:
-                line.done_by = self.env.user
-                line.done_date = fields.Datetime.now()
+            if line.state in RESOLVED_STATES:
+                line.resolved_by = self.env.user
+                line.resolved_date = fields.Datetime.now()
             else:
-                line.done_by = False
-                line.done_date = False
+                line.resolved_by = False
+                line.resolved_date = False
 
     @api.model_create_multi
     def create(self, vals_list):
         for vals in vals_list:
-            self._sync_done_stamp(vals)
+            self._sync_resolved_stamp(vals)
         return super().create(vals_list)
 
     def write(self, vals):
-        if 'is_done' in vals:
-            self._sync_done_stamp(vals)
+        if 'state' in vals:
+            self._sync_resolved_stamp(vals)
         return super().write(vals)
 
-    def _sync_done_stamp(self, vals):
-        """Keep done_by/done_date consistent even when is_done is set
-        programmatically (import, API call, ...) rather than through the
-        onchange above."""
-        if vals.get('is_done'):
-            vals.setdefault('done_by', self.env.user.id)
-            vals.setdefault('done_date', fields.Datetime.now())
-        elif 'is_done' in vals and not vals.get('is_done'):
-            vals.setdefault('done_by', False)
-            vals.setdefault('done_date', False)
+    def _sync_resolved_stamp(self, vals):
+        """Keep resolved_by/resolved_date consistent even when state is
+        set programmatically (import, API call, ...) rather than through
+        the onchange above."""
+        if vals.get('state') in RESOLVED_STATES:
+            vals.setdefault('resolved_by', self.env.user.id)
+            vals.setdefault('resolved_date', fields.Datetime.now())
+        elif 'state' in vals and vals.get('state') not in RESOLVED_STATES:
+            vals.setdefault('resolved_by', False)
+            vals.setdefault('resolved_date', False)
 
     def copy_data(self, default=None):
         # Any duplication of a checklist line - whether triggered by a
         # manual "Duplicate" of the task, a project duplication, or (most
         # importantly) the recurrence engine creating the next occurrence
-        # of a recurring task - should start unchecked: the work has not
-        # actually been redone yet on the new copy.
+        # of a recurring task - should start back at "pending": the work
+        # has not actually been redone (or re-confirmed not needed) yet
+        # on the new copy.
         default = dict(default or {})
-        default.setdefault('is_done', False)
-        default.setdefault('done_by', False)
-        default.setdefault('done_date', False)
+        default.setdefault('state', 'pending')
+        default.setdefault('resolved_by', False)
+        default.setdefault('resolved_date', False)
         return super().copy_data(default=default)
