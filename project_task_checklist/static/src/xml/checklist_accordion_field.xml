@@ -23,16 +23,13 @@
                         <span class="text-success" t-if="doneCount">
                             <i class="fa fa-check-square-o"/> <t t-esc="doneCount"/> complete
                         </span>
-                        <span t-if="notNeededCount">
-                            <i class="fa fa-minus-square-o"/> <t t-esc="notNeededCount"/> not needed
+                        <span class="text-danger" t-if="notNeededCount">
+                            <i class="fa fa-times-circle"/> <t t-esc="notNeededCount"/> not needed
                         </span>
                         <span t-if="pendingCount">
                             <i class="fa fa-square-o"/> <t t-esc="pendingCount"/> pending
                         </span>
                     </span>
-                    <button class="btn btn-link ms-auto p-0" t-on-click="resetAll">
-                        Reset All Checklists
-                    </button>
                 </div>
 
                 <p t-if="!state.checklists.length" class="text-muted fst-italic">
@@ -67,15 +64,18 @@
                     <div class="o_checklist_items" t-if="isExpanded(checklist.id)">
                         <div t-foreach="checklist.lines" t-as="item" t-key="item.id"
                              t-attf-class="o_checklist_item o_checklist_item_{{item.state}} d-flex align-items-center">
-                            <i t-attf-class="o_checklist_state_icon fa {{ item.state === 'done' ? 'fa-check-square-o text-success' : item.state === 'not_needed' ? 'fa-minus-square-o text-muted' : 'fa-square-o' }}"
-                               t-attf-title="{{ item.state === 'done' ? 'Complete' : item.state === 'not_needed' ? 'Not Needed' : 'Pending' }} - click to change"
-                               t-on-click="() => this.cycleItemState(item)"/>
+                            <i t-attf-class="o_checklist_state_icon fa {{ item.state === 'done' ? 'fa-check-square-o text-success' : item.state === 'not_needed' ? 'fa-times-circle text-danger' : 'fa-square-o' }}"
+                               title="Complete - click to toggle"
+                               t-on-click="() => this.toggleDone(item)"/>
                             <input type="text" t-model="item.name"
                                    t-attf-class="o_checklist_item_name {{ isResolved(item) ? 'text-decoration-line-through text-muted' : '' }}"
                                    t-on-change="(ev) => this.renameItem(item, ev.target.value)"/>
-                            <span t-attf-class="o_checklist_state_label flex-shrink-0 small {{ item.state === 'done' ? 'text-success' : item.state === 'not_needed' ? 'text-muted' : 'text-info' }}"
+                            <span t-attf-class="o_checklist_state_label flex-shrink-0 small {{ item.state === 'done' ? 'text-success' : item.state === 'not_needed' ? 'text-danger' : 'text-info' }}"
                                   t-esc="item.state === 'done' ? 'Complete' : item.state === 'not_needed' ? 'Not needed' : 'Pending'"/>
                             <span class="o_checklist_group_actions flex-shrink-0 ms-2">
+                                <i t-attf-class="fa fa-ban o_checklist_not_needed_btn {{ item.state === 'not_needed' ? 'o_active text-danger' : '' }}"
+                                   title="Not needed - click to toggle"
+                                   t-on-click="() => this.toggleNotNeeded(item)"/>
                                 <i class="fa fa-chevron-up" title="Move up"
                                    t-on-click="() => this.moveItem(checklist, item, -1)"/>
                                 <i class="fa fa-chevron-down" title="Move down"

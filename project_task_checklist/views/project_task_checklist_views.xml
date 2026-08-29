@@ -38,7 +38,7 @@
                             <field name="sequence" widget="handle"/>
                             <field name="state" widget="badge"
                                    decoration-success="state == 'done'"
-                                   decoration-muted="state == 'not_needed'"
+                                   decoration-danger="state == 'not_needed'"
                                    decoration-info="state == 'pending'"/>
                             <field name="name" placeholder="Checklist item..."/>
                             <field name="resolved_by" column_invisible="1"/>
@@ -89,9 +89,9 @@
                         <i class="fa fa-check-square-o"/>
                         <t t-esc="record.checklist_done_count.raw_value"/>
                     </span>
-                    <span class="d-flex align-items-center gap-1"
+                    <span class="d-flex align-items-center gap-1 text-danger"
                           t-if="record.checklist_not_needed_count.raw_value">
-                        <i class="fa fa-minus-square-o"/>
+                        <i class="fa fa-times-circle"/>
                         <t t-esc="record.checklist_not_needed_count.raw_value"/>
                     </span>
                     <span class="d-flex align-items-center gap-1"

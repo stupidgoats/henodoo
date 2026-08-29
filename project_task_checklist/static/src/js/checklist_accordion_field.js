@@ -5,8 +5,6 @@ import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
 
-// Clicking an item's status icon cycles it through these states in order.
-const STATE_CYCLE = ["pending", "done", "not_needed"];
 const RESOLVED_STATES = ["done", "not_needed"];
 
 /**
@@ -236,10 +234,19 @@ export class ChecklistAccordionField extends Component {
         await this.orm.write("project.task.checklist.line", [item.id], { name });
     }
 
-    /* Click cycles Pending -> Complete -> Not Needed -> Pending -> ... */
-    async cycleItemState(item) {
-        const next = STATE_CYCLE[(STATE_CYCLE.indexOf(item.state) + 1) % STATE_CYCLE.length];
-        await this.setItemState(item, next);
+    /* The main status icon behaves like a plain checkbox: Pending <-> Complete.
+     * Clicking it while an item is Not Needed clears that back to Pending
+     * too, rather than jumping straight to Complete. */
+    async toggleDone(item) {
+        const newState = item.state === "pending" ? "done" : "pending";
+        await this.setItemState(item, newState);
+    }
+
+    /* The separate "Not Needed" button toggles that state on its own,
+     * independent of the checkbox above - Not Needed <-> Pending. */
+    async toggleNotNeeded(item) {
+        const newState = item.state === "not_needed" ? "pending" : "not_needed";
+        await this.setItemState(item, newState);
     }
 
     async setItemState(item, newState) {
@@ -279,12 +286,6 @@ export class ChecklistAccordionField extends Component {
             )
         );
         await this.loadChecklists();
-    }
-
-    async resetAll() {
-        await this.orm.call("project.task", "action_reset_checklist", [[this.taskId]]);
-        await this.loadChecklists();
-        await this.refreshParent();
     }
 
     async onTemplateSelect(ev) {

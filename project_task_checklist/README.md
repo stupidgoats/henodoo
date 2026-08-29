@@ -11,8 +11,11 @@ recurrence engine creates the next occurrence of a recurring task.
   was created from, if any — informational only), `line_ids` (its
   items), and computed `total_count` / `done_count` / `not_needed_count`
   / `pending_count` / `progress` / `progress_label` (`"2/5"`-style text,
-  resolved-out-of-total). Has its own `action_reset_checklist()` for a
-  per-checklist "Reset Checklist" button.
+  resolved-out-of-total). Has its own `action_reset_checklist()` method
+  (sets every item back to Pending) — not currently wired to a button in
+  the accordion, but still available for a server action if you want
+  one, and still used by the "Reset Checklist" button on the generic
+  fallback form below.
 - **`project.task.checklist.line`** — one record per checklist item.
   Fields: `checklist_id` (its parent checklist), `task_id` (a
   read-only related convenience field), `sequence`, `name`, `state`
@@ -26,28 +29,29 @@ recurrence engine creates the next occurrence of a recurring task.
   `checklist_not_needed_count` / `checklist_pending_count` /
   `checklist_progress` (aggregated across all of the task's checklists;
   `checklist_progress` counts both Complete and Not Needed as resolved),
-  and an `action_reset_checklist()` method wired to a "Reset All
-  Checklists" button.
+  and an `action_reset_checklist()` method (same "available but not
+  wired to a button" status as above).
 - A **Checklist** tab on the task form, rendered by a small custom widget
   (`checklist_accordion`, under `static/src/js/`): an overall progress
-  bar and a complete/not-needed/pending breakdown for the whole task, a
-  "Reset All Checklists" button, and each checklist shown as a
-  collapsible group — click its header to expand it and work through its
-  items in place, similar to an expandable "group by" list. Each item
-  has a status icon (empty square / green check / grey dash) that cycles
-  Pending → Complete → Not Needed → Pending on click, plus a text label
-  spelling out its current state. Each group's own resolved/total count
-  and progress bar update live as you go, and so does the task-wide
-  total at the top. "Add a checklist" creates one ad hoc, no template
-  required; a "From template" dropdown next to it applies a saved
-  template.
+  bar and a complete/not-needed/pending breakdown for the whole task, and
+  each checklist shown as a collapsible group — click its header to
+  expand it and work through its items in place, similar to an
+  expandable "group by" list. Each item has its own status icon (empty
+  square / green check / red X) that toggles Complete on click, plus a
+  separate small button next to the reorder/delete icons that toggles
+  Not Needed on its own — no cycling through states to land on the one
+  you want — and a text label spelling out the current state. Each
+  group's own resolved/total count and progress bar update live as you
+  go, and so does the task-wide total at the top. "Add a checklist"
+  creates one ad hoc, no template required; a "From template" dropdown
+  next to it applies a saved template.
 - A **generic form view** for `project.task.checklist` still exists
   (`view_task_checklist_form`) as the model's default form for
   technical/backend access, but the task's Checklist tab no longer
   navigates to it — everything happens inline in the accordion.
 - A small **progress breakdown on the kanban card**: a green check icon
-  with the Complete count, a grey dash icon with the Not Needed count,
-  an empty-square icon with the Pending count (each only shown when
+  with the Complete count, a red X icon with the Not Needed count, an
+  empty-square icon with the Pending count (each only shown when
   non-zero), plus a thin progress bar — aggregated across all of a
   task's checklists, only shown when the task has at least one checklist
   item.
@@ -188,6 +192,22 @@ manual cleanup is needed.
 
 ## Changelog
 
+- **v18.0.2.3.0**: Two UX refinements based on testing feedback.
+  Marking an item Complete and marking it Not Needed are now separate
+  controls instead of one 3-way cycling icon: click an item's own status
+  icon (empty box / green check / red X, red X being new — it was a grey
+  dash before) to toggle Complete, and click a small new button next to
+  the reorder/delete icons to toggle Not Needed independently. Also
+  removed the "Reset All Checklists" button from the top of the
+  Checklist tab — no real use case for resetting every checklist on a
+  task at once turned up in testing. The underlying
+  `action_reset_checklist()` methods on both `project.task` and
+  `project.task.checklist` are unchanged and still callable (e.g. from a
+  server action); only the button is gone. Also fixed a CSS specificity
+  bug from v18.0.2.2.0 where the status icon's own base color rule was
+  silently overriding the `text-success`/`text-danger` color classes
+  meant to make it green/red, regardless of state. No model or schema
+  changes.
 - **v18.0.2.2.0**: Replaced the item's `is_done` Boolean with a
   three-way `state` (Pending / Complete / Not Needed), so an item can be
   marked as not applicable instead of forced into checked-or-unchecked.
@@ -307,51 +327,57 @@ one-line fix — paste the traceback and I'll adjust it.
    **Add an item…**. Confirm each appears indented underneath as
    **Pending** with an empty-square icon, and the group's "n/total"
    count and progress bar update immediately after each add.
-5. Click an item's status icon once. Confirm it becomes **Complete**
-   (green check, strikethrough text) and the group's resolved/total
-   count and progress bar update **immediately** — no Save needed.
-   Click it again and confirm it becomes **Not Needed** (grey dash,
-   strikethrough); click once more and confirm it's back to
-   **Pending** (normal text). This 3-way cycle, and the fact that both
-   Complete and Not Needed move the progress bar, is the main thing
-   this round of changes was for.
-6. With a mix of states across a couple of items, confirm the overall
+5. Click an item's status icon once. Confirm it turns into an actual
+   **green** check mark (not just the same color as everything else —
+   there was a CSS bug in the previous version where this never visibly
+   changed color) and the row gets strikethrough text; the group's
+   resolved/total count and progress bar update **immediately** — no
+   Save needed. Click the status icon again and confirm it goes back to
+   **Pending** (empty box, normal text) rather than jumping to Not
+   Needed — the checkbox only toggles Complete now.
+6. On a different item, click the small button next to the reorder/
+   delete icons (not the main status icon) and confirm the item becomes
+   **Not Needed**: the status icon turns into an actual **red** X,
+   strikethrough text, and the button itself looks "pressed"/highlighted
+   red. Click that same button again and confirm it goes back to
+   Pending. Confirm the two controls are independent — toggling Complete
+   on one item doesn't affect another item's Not Needed state.
+7. With a mix of states across a couple of items, confirm the overall
    summary at the top of the tab shows separate complete/not-needed/
    pending counts that add up correctly, and the kanban card for this
-   task (from the Tasks list/kanban view) shows the same three counts.
-7. Collapse the group (click its header again) and confirm it collapses
+   task (from the Tasks list/kanban view) shows the same three counts
+   with a red X icon for Not Needed. Confirm there's no "Reset All
+   Checklists" button at the top of the tab any more.
+8. Collapse the group (click its header again) and confirm it collapses
    without losing anything; re-expand and confirm each item kept its
    state.
-8. Rename a checklist (edit the name field in its header, click away) and
+9. Rename a checklist (edit the name field in its header, click away) and
    rename an item the same way; confirm both persist after a page
    refresh.
-9. Use the ▲/▼ icons on a checklist's header to reorder it relative to
-   another checklist, and the ▲/▼ icons on an item to reorder it within
-   its checklist; confirm the new order survives a page refresh.
-10. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
+10. Use the ▲/▼ icons on a checklist's header to reorder it relative to
+    another checklist, and the ▲/▼ icons on an item to reorder it within
+    its checklist; confirm the new order survives a page refresh.
+11. Go to **Project ▸ Configuration ▸ Checklist Templates**, create a
     template with a name and a few items.
-11. Back on the task's Checklist tab, pick that template from the
+12. Back on the task's Checklist tab, pick that template from the
     **From template…** dropdown. Confirm it adds a new, expanded group
     pre-filled with the template's items, all Pending.
-12. Edit the template's items afterward and confirm the task's
+13. Edit the template's items afterward and confirm the task's
     already-added checklist is unaffected (it's a one-time copy).
-13. As a non-manager project user, confirm you can apply a template from
+14. As a non-manager project user, confirm you can apply a template from
     the dropdown but cannot edit the template list itself (read-only);
     as a manager, confirm you can create/edit/delete templates.
-14. Click the trash icon on one checklist item, then on a whole
+15. Click the trash icon on one checklist item, then on a whole
     checklist group; confirm each disappears immediately and doesn't
     come back on refresh.
-15. Enable recurrence on the task (repeat e.g. daily), mark it done so
+16. Enable recurrence on the task (repeat e.g. daily), mark it done so
     the next occurrence is generated (or trigger the recurrence cron
     manually). Open the new occurrence and confirm **every** checklist
     on the task, and every item in each, is present and back to
     **Pending** — including any that were Not Needed on the original.
-16. Click **Duplicate** on a task with a mix of Complete/Not Needed/
+17. Click **Duplicate** on a task with a mix of Complete/Not Needed/
     Pending items and confirm the copy's checklists are all reset to
     Pending.
-17. Click **Reset All Checklists** at the top of the tab on a task with
-    some Complete/Not Needed items and confirm every item goes back to
-    Pending, without creating a new task.
 18. Create a brand-new task (don't save yet) and open its Checklist tab
     — confirm it shows the "save the task first" message rather than
     erroring. Save the task, reopen the tab, and confirm it now lets you

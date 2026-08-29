@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.2.2.0',
+    'version': '18.0.2.3.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, auto-reset on recurrence',
     'description': """
@@ -18,10 +18,13 @@ Features
   bar update live as you go, and so does the task-wide total.
 * Each item has three states, not just checked/unchecked: Pending,
   Complete, or Not Needed (for items that turn out not to apply to this
-  task). Click an item's status icon to cycle through the three. Both
-  Complete and Not Needed count as "resolved" for progress bars; the
-  Checklist tab and the kanban card each break the count down by state
-  so it's clear at a glance how many were actually done versus skipped.
+  task). Click an item's own status icon (empty box / green check / red
+  X) to toggle Complete; a separate small button next to the reorder/
+  delete icons toggles Not Needed independently - no cycling through
+  states to get to the one you want. Both Complete and Not Needed count
+  as "resolved" for progress bars; the Checklist tab and the kanban card
+  each break the count down by state so it's clear at a glance how many
+  were actually done versus skipped.
 * Checklists can be created ad hoc, directly on a task, with no setup
   required.
 * Reusable checklist templates (Project > Configuration > Checklist
@@ -42,9 +45,11 @@ Features
   The reasoning: a checklist represents work still to be done on *this*
   instance of the task, so a freshly created copy should not inherit a
   previous instance's completed state.
-* A manual "Reset All Checklists" button on the task, and a per-checklist
-  "Reset Checklist" button, for cases where you want to re-run a
-  checklist without duplicating the whole task.
+* `project.task.action_reset_checklist()` / `project.task.checklist.
+  action_reset_checklist()` remain available for setting items back to
+  Pending without duplicating the task (e.g. from a server action) -
+  there's just no button wired to them in this version, since resetting
+  everything at once didn't turn out to have a real use case.
 
 Architecture note
 ------------------
@@ -75,8 +80,9 @@ UI note
 -------
 The Checklist tab is a small custom widget (`checklist_accordion`), not a
 standard Odoo list - it talks to the ORM directly and re-fetches its own
-data after every change (add/rename/delete/check/reorder/apply template/
-reset all), rather than relying on the record's in-memory one2many state.
+data after every change (add/rename/delete/mark complete or not needed/
+reorder/apply template), rather than relying on the record's in-memory
+one2many state.
 That is deliberate: it keeps every displayed count provably correct
 without depending on how far Odoo's client-side onchange propagates
 through nested one2many levels while the form is still unsaved. One
@@ -101,6 +107,10 @@ three-way `state` Selection (see Features above). This module ships a
 migration script (`migrations/18.0.2.2.0/post-migrate.py`) that carries
 existing checked items over to `state = 'done'` automatically on
 upgrade, so no manual cleanup is needed for this one.
+
+Version 18.0.2.3.0 only changes the Checklist tab's controls (separate
+Complete/Not Needed buttons instead of one cycling icon; removed the
+"Reset All Checklists" button) - no model or schema changes.
 """,
     'author': 'Your Company',
     'website': '',

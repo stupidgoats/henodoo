@@ -84,16 +84,38 @@
 }
 
 .o_checklist_accordion .o_checklist_state_icon {
+    /* No color set here on purpose: the template puts a Bootstrap
+     * text-success/text-danger class on this element for the Complete/Not
+     * Needed states, and a same-or-higher-specificity color rule here
+     * would silently win over that utility class and mask it. Pending
+     * (no color class) just inherits the ambient text color, which is
+     * what an explicit "inherit" here would have done anyway. */
     cursor: pointer;
     width: 18px;
     text-align: center;
     margin-right: 8px;
     font-size: 15px;
-    color: var(--bs-body-color, inherit);
     opacity: 0.8;
 }
 
 .o_checklist_accordion .o_checklist_state_icon:hover {
+    opacity: 1;
+}
+
+/* Extra-specific (repeats .o_checklist_group_actions) so this wins over
+ * the generic ".o_checklist_group_actions .fa" opacity rule above,
+ * regardless of source order. */
+.o_checklist_accordion .o_checklist_group_actions .o_checklist_not_needed_btn {
+    opacity: 0.45;
+    color: var(--bs-body-color, inherit);
+}
+
+.o_checklist_accordion .o_checklist_group_actions .o_checklist_not_needed_btn:hover {
+    opacity: 0.85;
+}
+
+.o_checklist_accordion .o_checklist_group_actions .o_checklist_not_needed_btn.o_active {
+    color: var(--bs-danger, #dc3545);
     opacity: 1;
 }
 
