@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.3.2.0',
+    'version': '18.0.3.3.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -151,6 +151,19 @@ text size again - the 18.0.3.1.0 bump only applied at desktop widths
 too small to read comfortably. Font-size rules are now !important, to
 make sure they win out over Odoo's own mobile kanban CSS regardless of
 asset load order.
+
+Version 18.0.3.3.0 reworks kanban checklist sizing around input type
+rather than just screen width, via `@media (pointer: coarse)` - this
+targets phones AND tablets specifically (any device whose primary
+pointer is imprecise, in either orientation), instead of guessing from
+viewport width alone. On a touch device: text jumps to 18px, the
+checkbox icon to 26px, row padding grows enough to give each row a real
+touch target and a visible divider between items (so adjacent items
+don't get mis-tapped), and the cancel button gets its own padded touch
+target rather than just a bigger glyph. Also adds a light green/red
+background tint on Complete/Not Needed rows, so progress reads at a
+glance without needing to read the strikethrough text - useful at any
+size, more so the bigger and more finger-first this gets.
 """,
     'author': 'Your Company',
     'website': '',

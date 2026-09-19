@@ -3,25 +3,29 @@
  * and visually compact/flat (no accordion grouping) since a kanban card
  * has very little room to work with.
  *
- * Sizing starts legible-on-a-phone by default (this widget is meant to be
- * read and tapped on a phone screen first - a desktop monitor was never
- * the tight constraint here), then bumps up a little further at desktop
- * widths (768px+) where cards have more room to spare.
+ * Sizing is tiered by INPUT TYPE, not just screen width - a touchscreen
+ * tablet in landscape can be just as wide as a mouse-driven laptop, but it
+ * still needs finger-sized targets, and a width breakpoint alone can't
+ * tell the two apart. `@media (pointer: coarse)` can: it matches any
+ * device whose primary pointer is imprecise (phones, tablets, touch
+ * laptops), regardless of viewport width, and is placed last in this file
+ * so it wins over the width-based tier below on a touch device that also
+ * happens to be wide.
  *
- * Font-size is !important on purpose: Odoo's own mobile kanban CSS sets
- * fairly aggressive font-size rules on kanban card content at the same
- * specificity (one class), and which one wins would otherwise come down
- * to asset-bundle load order - not something worth leaving to chance for
- * the one property this widget most needs to control. */
+ * Font-size (and a couple of sizing properties) are !important on purpose:
+ * Odoo's own mobile kanban CSS sets fairly aggressive rules on kanban card
+ * content at the same specificity (one class), and which one wins would
+ * otherwise come down to asset-bundle load order - not something worth
+ * leaving to chance for the properties this widget most needs to control. */
 
 .o_checklist_kanban_wrap {
-    margin-top: 4px;
-    padding-top: 4px;
+    margin-top: 6px;
+    padding-top: 6px;
     border-top: 1px solid rgba(127, 127, 127, 0.2);
 }
 
 .o_checklist_kanban_summary {
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     font-size: 14px !important;
 }
 
@@ -29,11 +33,28 @@
     white-space: nowrap;
 }
 
+/* Base row: click anywhere on the row (other than the cancel button) to
+ * cycle the item's state - this is already the widget's biggest tap
+ * target since it's the whole row, not just the icon glyph. A light
+ * background tint on resolved states makes progress readable at a glance
+ * without having to read the strikethrough text, which matters more the
+ * bigger and more finger-first this gets. Horizontal padding is safe here
+ * (doesn't push the row wider than its container) since Odoo's own CSS
+ * reset uses border-box sizing throughout the web client. */
 .o_checklist_kanban_item {
-    padding: 3px 0;
+    padding: 4px 4px;
+    border-radius: 4px;
     cursor: pointer;
     font-size: 14px !important;
     line-height: 1.6;
+}
+
+.o_checklist_kanban_item_done {
+    background-color: rgba(40, 167, 69, 0.09);
+}
+
+.o_checklist_kanban_item_not_needed {
+    background-color: rgba(220, 53, 69, 0.07);
 }
 
 .o_checklist_kanban_item:hover .o_checklist_kanban_item_name {
@@ -58,10 +79,10 @@
 }
 
 /* The "cancel" (Not Needed) button - deliberately pushed to the opposite
- * end of the row from the checkbox icon (margin-left: auto via the name's
- * flex-grow-1, plus its own left margin here) so it's never an accidental
- * misclick right after tapping the checkbox. Dim by default like the form's
- * equivalent button, full red once active. */
+ * end of the row from the checkbox icon (its own left margin, plus the
+ * name taking up the remaining flex space) so it's never an accidental
+ * misclick right after tapping the checkbox. Dim by default like the
+ * form's equivalent button, full red once active. */
 .o_checklist_kanban_cancel {
     cursor: pointer;
     flex-shrink: 0;
@@ -82,6 +103,8 @@
     opacity: 1;
 }
 
+/* Wider, mouse-driven screens: a modest bump - not the main event here,
+ * just keeps things from looking cramped on a monitor. */
 @media (min-width: 768px) {
     .o_checklist_kanban_summary {
         font-size: 15px !important;
@@ -90,16 +113,53 @@
     .o_checklist_kanban_item {
         font-size: 15px !important;
         line-height: 1.7;
-        padding: 3px 0;
     }
 
-    .o_checklist_kanban_icon,
-    .o_checklist_kanban_cancel {
+    .o_checklist_kanban_icon {
         font-size: 16px !important;
         width: 19px;
     }
 
     .o_checklist_kanban_cancel {
+        font-size: 16px !important;
+        width: 19px;
+        margin-left: 14px;
+    }
+}
+
+/* Touch devices - phones AND tablets, at any width, in either orientation.
+ * This is the tier that actually matters for "easy to tap": noticeably
+ * larger text, a much taller row so adjacent items don't get mis-tapped,
+ * a visible divider between rows since they're now tall enough that the
+ * eye needs the help, and a real, generously padded touch target on both
+ * the row and the cancel button. Placed last so it wins over the width
+ * tier above on a wide touch tablet. */
+@media (pointer: coarse) {
+    .o_checklist_kanban_summary {
+        font-size: 16px !important;
+    }
+
+    .o_checklist_kanban_item {
+        font-size: 18px !important;
+        line-height: 1.5;
+        padding: 12px 6px;
+        border-bottom: 1px solid rgba(127, 127, 127, 0.12);
+    }
+
+    .o_checklist_kanban_item:last-child {
+        border-bottom: none;
+    }
+
+    .o_checklist_kanban_icon {
+        font-size: 26px !important;
+        width: 34px;
+        margin-right: 10px;
+    }
+
+    .o_checklist_kanban_cancel {
+        font-size: 24px !important;
+        width: 34px;
+        padding: 6px;
         margin-left: 16px;
     }
 }
