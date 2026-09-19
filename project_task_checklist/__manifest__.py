@@ -1,8 +1,8 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.2.3.0',
+    'version': '18.0.3.0.0',
     'category': 'Services/Project',
-    'summary': 'Add checklists to project tasks, auto-reset on recurrence',
+    'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
 Project Task Checklist
 =======================
@@ -16,6 +16,14 @@ Features
   it and work through its items in place, similar to an expandable
   "group by" list. Each checklist's resolved/total count and progress
   bar update live as you go, and so does the task-wide total.
+* For a task that already has at least one checklist, the checklist
+  moves to the very top of the task form - right under the task name -
+  ahead of Project/Assignees/Deadline/etc. and the other tabs, since at
+  that point it's usually the thing you actually opened the task to
+  look at. A task with no checklist yet looks exactly as before, with a
+  "Checklist" tab (first in the notebook) to add the first one; once
+  that's saved, the widget "moves" itself to the top on the next form
+  load.
 * Each item has three states, not just checked/unchecked: Pending,
   Complete, or Not Needed (for items that turn out not to apply to this
   task). Click an item's own status icon (empty box / green check / red
@@ -25,6 +33,12 @@ Features
   as "resolved" for progress bars; the Checklist tab and the kanban card
   each break the count down by state so it's clear at a glance how many
   were actually done versus skipped.
+* Kanban cards show a done/not-needed/pending badge row plus the actual
+  checklist items underneath, each with its own checkbox - so an item
+  can be checked off right on the card, without opening the task. (Not
+  Needed items show as resolved on the card but aren't toggleable from
+  there - that stays a task-form action, to keep the card to one obvious
+  click per item.)
 * Checklists can be created ad hoc, directly on a task, with no setup
   required.
 * Reusable checklist templates (Project > Configuration > Checklist
@@ -34,7 +48,7 @@ Features
   then independent, so editing it never touches the template or other
   tasks.
 * A combined progress bar and done/total count for the whole task, shown
-  on the task form's Checklist tab and on the kanban card.
+  on the task form's Checklist section and on the kanban card.
 * Checklist items automatically reset to Pending whenever a task is
   copied - this covers:
 
@@ -78,39 +92,38 @@ recurrence engine itself are required - only
 
 UI note
 -------
-The Checklist tab is a small custom widget (`checklist_accordion`), not a
-standard Odoo list - it talks to the ORM directly and re-fetches its own
-data after every change (add/rename/delete/mark complete or not needed/
-reorder/apply template), rather than relying on the record's in-memory
-one2many state.
-That is deliberate: it keeps every displayed count provably correct
-without depending on how far Odoo's client-side onchange propagates
-through nested one2many levels while the form is still unsaved. One
-consequence: a brand-new, not-yet-saved task has nowhere to attach a
-checklist to yet, so save the task once before adding its first
-checklist.
+The Checklist tab/top-of-form section is a small custom widget
+(`checklist_accordion`), and the kanban card's checkable list is a
+second, simpler widget (`checklist_kanban`) - neither is a standard
+Odoo list. Both talk to the ORM directly and re-fetch their own data
+after a change, rather than relying on the record's in-memory one2many
+state. That is deliberate: it keeps every displayed count provably
+correct without depending on how far Odoo's client-side onchange
+propagates through nested one2many levels while a form stays unsaved,
+or on kanban cards constantly re-rendering as the board scrolls or
+regroups. One consequence: a brand-new, not-yet-saved task has nowhere
+to attach a checklist to yet, so save the task once before adding its
+first checklist.
 
 Upgrade notes
 -------------
 Version 18.0.2.0.0 restructured checklist items to belong to a checklist
-record instead of directly to the task (see Architecture note above).
-This was a breaking schema change: the `checklist_line_ids` field is
-gone, replaced by `checklist_ids` -> `line_ids`. If you have existing
-checklist items from an install earlier than that, remove them (or
-reinstall the module fresh) before upgrading, since the required
-`checklist_id` column has no data to populate itself from on existing
-rows. Version 18.0.2.1.0 (the accordion UI) was purely additive on top
-of that - no schema changes.
+record instead of directly to the task. This was a breaking schema
+change: the `checklist_line_ids` field is gone, replaced by
+`checklist_ids` -> `line_ids`. Version 18.0.2.1.0 (the accordion UI) was
+purely additive on top of that.
 
-Version 18.0.2.2.0 replaces the item's `is_done` Boolean with a
-three-way `state` Selection (see Features above). This module ships a
-migration script (`migrations/18.0.2.2.0/post-migrate.py`) that carries
-existing checked items over to `state = 'done'` automatically on
-upgrade, so no manual cleanup is needed for this one.
+Version 18.0.2.2.0 replaced the item's `is_done` Boolean with a
+three-way `state` Selection.
 
-Version 18.0.2.3.0 only changes the Checklist tab's controls (separate
+Version 18.0.2.3.0 only changed the Checklist tab's controls (separate
 Complete/Not Needed buttons instead of one cycling icon; removed the
 "Reset All Checklists" button) - no model or schema changes.
+
+Version 18.0.3.0.0 adds the kanban card checklist (view + checkbox
+widget) and moves the checklist to the top of the task form when the
+task has one - no schema changes, purely new views/widgets on top of
+the existing `project.task.checklist` / `.line` models.
 """,
     'author': 'Your Company',
     'website': '',
@@ -124,8 +137,11 @@ Complete/Not Needed buttons instead of one cycling icon; removed the
     'assets': {
         'web.assets_backend': [
             'project_task_checklist/static/src/js/checklist_accordion_field.js',
+            'project_task_checklist/static/src/js/checklist_kanban_field.js',
             'project_task_checklist/static/src/xml/checklist_accordion_field.xml',
+            'project_task_checklist/static/src/xml/checklist_kanban_field.xml',
             'project_task_checklist/static/src/css/checklist_accordion.css',
+            'project_task_checklist/static/src/css/checklist_kanban.css',
         ],
     },
     'installable': True,

@@ -1,0 +1,45 @@
+/* Styling for the checklist widget shown directly on kanban cards
+ * (checklist_kanban_field.js). Kept separate from checklist_accordion.css
+ * and visually compact/flat (no accordion grouping) since a kanban card
+ * has very little room to work with. */
+
+.o_checklist_kanban_wrap {
+    margin-top: 4px;
+    padding-top: 4px;
+    border-top: 1px solid rgba(127, 127, 127, 0.2);
+}
+
+.o_checklist_kanban_summary {
+    margin-bottom: 2px;
+    font-size: 12px;
+}
+
+.o_checklist_kanban_summary > span {
+    white-space: nowrap;
+}
+
+.o_checklist_kanban_item {
+    padding: 1px 0;
+    cursor: pointer;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.o_checklist_kanban_item:hover .o_checklist_kanban_item_name {
+    text-decoration: underline;
+}
+
+.o_checklist_kanban_icon {
+    width: 14px;
+    text-align: center;
+    margin-right: 5px;
+    font-size: 12px;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
+
+.o_checklist_kanban_item_name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

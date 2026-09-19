@@ -4,6 +4,10 @@
  * Odoo's list renderer - so there is no risk of the class-not-forwarded
  * problem that affected the old CSS-based section styling. */
 
+.o_checklist_form_top {
+    margin: 4px 0 20px 0;
+}
+
 .o_checklist_accordion .o_checklist_group {
     border: 1px solid var(--border-color, rgba(127, 127, 127, 0.3));
     border-radius: 4px;

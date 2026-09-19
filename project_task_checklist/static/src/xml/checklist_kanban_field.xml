@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+
+    <t t-name="project_task_checklist.ChecklistKanbanField" owl="1">
+        <div class="o_checklist_kanban" t-if="!state.loading and state.items.length">
+            <div t-foreach="state.items" t-as="item" t-key="item.id"
+                 t-attf-class="o_checklist_kanban_item o_checklist_kanban_item_{{item.state}} d-flex align-items-center"
+                 t-on-click="(ev) => this.toggleItem(item, ev)">
+                <i t-attf-class="o_checklist_kanban_icon fa {{ item.state === 'done' ? 'fa-check-square-o text-success' : item.state === 'not_needed' ? 'fa-times-circle text-danger' : 'fa-square-o' }}"/>
+                <span t-attf-class="o_checklist_kanban_item_name {{ isResolved(item) ? 'text-decoration-line-through text-muted' : '' }}"
+                      t-esc="item.name"/>
+            </div>
+        </div>
+    </t>
+
+</templates>

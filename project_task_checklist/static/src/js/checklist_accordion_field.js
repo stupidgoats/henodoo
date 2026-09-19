@@ -131,10 +131,10 @@ export class ChecklistAccordionField extends Component {
 
     /* Best-effort refresh of the task record itself, so anything elsewhere
      * on the form reading checklist_total_count / checklist_done_count /
-     * checklist_progress (there is currently nothing else, but this keeps
-     * it correct if that ever changes) picks up the new numbers too. The
-     * widget's own display never depends on this succeeding - it always
-     * uses the state loaded straight from loadChecklists() above. */
+     * checklist_progress (the top-of-form placement and the kanban badges
+     * both depend on these) picks up the new numbers too. The widget's own
+     * display never depends on this succeeding - it always uses the state
+     * loaded straight from loadChecklists() above. */
     async refreshParent() {
         try {
             await this.props.record.load();
