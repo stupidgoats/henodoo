@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.3.1.0',
+    'version': '18.0.3.1.1',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -133,6 +133,17 @@ Complete, and adds a dedicated "cancel" (Not Needed) button at the far
 end of each row, positioned well apart from the checkbox to avoid
 accidental misclicks. Also increases the kanban checklist's text size
 at desktop widths (768px+), where cards have more room to spare.
+
+Version 18.0.3.1.1 fixes a bug (present since the accordion widget's
+original version) where renaming a checklist or a checklist item never
+actually saved: the name input is bound two-way via t-model, which
+already syncs the in-memory value on every keystroke, so the onChange
+handler's "did this actually change" guard was comparing the new value
+against itself and always skipping the write. Renaming now always
+writes (unless the new name is empty, which reloads instead of trying
+to save a blank required field). This widget was always meant to save
+each edit immediately over the ORM - no schema changes; no form Save
+button appears (or needs to) for checklist edits by design.
 """,
     'author': 'Your Company',
     'website': '',

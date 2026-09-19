@@ -180,8 +180,17 @@ export class ChecklistAccordionField extends Component {
     }
 
     async renameChecklist(checklist, name) {
+        // Note: checklist.name is bound two-way via t-model on the input,
+        // so it is already live-updated to this same value by the time
+        // this onChange handler runs (t-model syncs on every keystroke,
+        // before the blur-triggered "change" event that calls this). A
+        // `name === checklist.name` guard here would therefore always be
+        // true and would silently skip the write on every real edit - so
+        // the only thing worth guarding against is an empty name, which
+        // the required field wouldn't accept.
         name = (name || "").trim();
-        if (!name || name === checklist.name) {
+        if (!name) {
+            await this.loadChecklists();
             return;
         }
         checklist.name = name;
@@ -226,8 +235,13 @@ export class ChecklistAccordionField extends Component {
     }
 
     async renameItem(item, name) {
+        // Same reasoning as renameChecklist() above: item.name is already
+        // live-synced to this value via t-model by the time this onChange
+        // handler runs, so comparing name to item.name here would always
+        // be true and would silently skip every real edit.
         name = (name || "").trim();
-        if (!name || name === item.name) {
+        if (!name) {
+            await this.loadChecklists();
             return;
         }
         item.name = name;
