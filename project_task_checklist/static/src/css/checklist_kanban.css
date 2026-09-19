@@ -3,9 +3,16 @@
  * and visually compact/flat (no accordion grouping) since a kanban card
  * has very little room to work with.
  *
- * Sizing is mobile-first and compact by default, then bumped up at desktop
- * widths (768px+) where cards have more room to spare and small kanban
- * text is otherwise hard to read. */
+ * Sizing starts legible-on-a-phone by default (this widget is meant to be
+ * read and tapped on a phone screen first - a desktop monitor was never
+ * the tight constraint here), then bumps up a little further at desktop
+ * widths (768px+) where cards have more room to spare.
+ *
+ * Font-size is !important on purpose: Odoo's own mobile kanban CSS sets
+ * fairly aggressive font-size rules on kanban card content at the same
+ * specificity (one class), and which one wins would otherwise come down
+ * to asset-bundle load order - not something worth leaving to chance for
+ * the one property this widget most needs to control. */
 
 .o_checklist_kanban_wrap {
     margin-top: 4px;
@@ -14,8 +21,8 @@
 }
 
 .o_checklist_kanban_summary {
-    margin-bottom: 2px;
-    font-size: 12px;
+    margin-bottom: 3px;
+    font-size: 14px !important;
 }
 
 .o_checklist_kanban_summary > span {
@@ -23,10 +30,10 @@
 }
 
 .o_checklist_kanban_item {
-    padding: 1px 0;
+    padding: 3px 0;
     cursor: pointer;
-    font-size: 12px;
-    line-height: 1.4;
+    font-size: 14px !important;
+    line-height: 1.6;
 }
 
 .o_checklist_kanban_item:hover .o_checklist_kanban_item_name {
@@ -34,10 +41,10 @@
 }
 
 .o_checklist_kanban_icon {
-    width: 14px;
+    width: 18px;
     text-align: center;
-    margin-right: 5px;
-    font-size: 12px;
+    margin-right: 6px;
+    font-size: 15px !important;
     opacity: 0.85;
     flex-shrink: 0;
 }
@@ -47,6 +54,7 @@
     text-overflow: ellipsis;
     white-space: nowrap;
     min-width: 0;
+    font-size: inherit;
 }
 
 /* The "cancel" (Not Needed) button - deliberately pushed to the opposite
@@ -57,10 +65,10 @@
 .o_checklist_kanban_cancel {
     cursor: pointer;
     flex-shrink: 0;
-    width: 14px;
+    width: 18px;
     text-align: center;
-    margin-left: 10px;
-    font-size: 12px;
+    margin-left: 12px;
+    font-size: 15px !important;
     opacity: 0.4;
     color: var(--bs-body-color, inherit);
 }
@@ -76,22 +84,22 @@
 
 @media (min-width: 768px) {
     .o_checklist_kanban_summary {
-        font-size: 14px;
+        font-size: 15px !important;
     }
 
     .o_checklist_kanban_item {
-        font-size: 14px;
+        font-size: 15px !important;
         line-height: 1.7;
-        padding: 2px 0;
+        padding: 3px 0;
     }
 
     .o_checklist_kanban_icon,
     .o_checklist_kanban_cancel {
-        font-size: 14px;
-        width: 16px;
+        font-size: 16px !important;
+        width: 19px;
     }
 
     .o_checklist_kanban_cancel {
-        margin-left: 14px;
+        margin-left: 16px;
     }
 }

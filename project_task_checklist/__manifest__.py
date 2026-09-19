@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.3.1.1',
+    'version': '18.0.3.2.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -144,6 +144,13 @@ writes (unless the new name is empty, which reloads instead of trying
 to save a blank required field). This widget was always meant to save
 each edit immediately over the ORM - no schema changes; no form Save
 button appears (or needs to) for checklist edits by design.
+
+Version 18.0.3.2.0 raises the kanban checklist's base (phone-width)
+text size again - the 18.0.3.1.0 bump only applied at desktop widths
+(768px+) and left phones at the original small size, which was still
+too small to read comfortably. Font-size rules are now !important, to
+make sure they win out over Odoo's own mobile kanban CSS regardless of
+asset load order.
 """,
     'author': 'Your Company',
     'website': '',
