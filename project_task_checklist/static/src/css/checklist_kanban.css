@@ -1,7 +1,11 @@
 /* Styling for the checklist widget shown directly on kanban cards
  * (checklist_kanban_field.js). Kept separate from checklist_accordion.css
  * and visually compact/flat (no accordion grouping) since a kanban card
- * has very little room to work with. */
+ * has very little room to work with.
+ *
+ * Sizing is mobile-first and compact by default, then bumped up at desktop
+ * widths (768px+) where cards have more room to spare and small kanban
+ * text is otherwise hard to read. */
 
 .o_checklist_kanban_wrap {
     margin-top: 4px;
@@ -42,4 +46,52 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    min-width: 0;
+}
+
+/* The "cancel" (Not Needed) button - deliberately pushed to the opposite
+ * end of the row from the checkbox icon (margin-left: auto via the name's
+ * flex-grow-1, plus its own left margin here) so it's never an accidental
+ * misclick right after tapping the checkbox. Dim by default like the form's
+ * equivalent button, full red once active. */
+.o_checklist_kanban_cancel {
+    cursor: pointer;
+    flex-shrink: 0;
+    width: 14px;
+    text-align: center;
+    margin-left: 10px;
+    font-size: 12px;
+    opacity: 0.4;
+    color: var(--bs-body-color, inherit);
+}
+
+.o_checklist_kanban_cancel:hover {
+    opacity: 0.85;
+}
+
+.o_checklist_kanban_cancel.o_active {
+    color: var(--bs-danger, #dc3545);
+    opacity: 1;
+}
+
+@media (min-width: 768px) {
+    .o_checklist_kanban_summary {
+        font-size: 14px;
+    }
+
+    .o_checklist_kanban_item {
+        font-size: 14px;
+        line-height: 1.7;
+        padding: 2px 0;
+    }
+
+    .o_checklist_kanban_icon,
+    .o_checklist_kanban_cancel {
+        font-size: 14px;
+        width: 16px;
+    }
+
+    .o_checklist_kanban_cancel {
+        margin-left: 14px;
+    }
 }

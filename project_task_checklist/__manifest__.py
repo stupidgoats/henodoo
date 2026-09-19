@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.3.0.0',
+    'version': '18.0.3.1.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -34,11 +34,13 @@ Features
   each break the count down by state so it's clear at a glance how many
   were actually done versus skipped.
 * Kanban cards show a done/not-needed/pending badge row plus the actual
-  checklist items underneath, each with its own checkbox - so an item
-  can be checked off right on the card, without opening the task. (Not
-  Needed items show as resolved on the card but aren't toggleable from
-  there - that stays a task-form action, to keep the card to one obvious
-  click per item.)
+  checklist items underneath. Clicking an item's row cycles it Pending ->
+  Complete -> Not Needed -> Pending, so any state is reachable with at
+  most two clicks right on the card, no need to open the task. A
+  separate "cancel" button sits at the far end of each row - well apart
+  from the checkbox, to avoid accidental misclicks - as a one-click
+  shortcut straight to Not Needed, for a chore that turns out not to
+  apply without cycling through Complete first.
 * Checklists can be created ad hoc, directly on a task, with no setup
   required.
 * Reusable checklist templates (Project > Configuration > Checklist
@@ -124,6 +126,13 @@ Version 18.0.3.0.0 adds the kanban card checklist (view + checkbox
 widget) and moves the checklist to the top of the task form when the
 task has one - no schema changes, purely new views/widgets on top of
 the existing `project.task.checklist` / `.line` models.
+
+Version 18.0.3.1.0 changes the kanban card's interaction: the row click
+now cycles through all three states instead of only toggling Pending/
+Complete, and adds a dedicated "cancel" (Not Needed) button at the far
+end of each row, positioned well apart from the checkbox to avoid
+accidental misclicks. Also increases the kanban checklist's text size
+at desktop widths (768px+), where cards have more room to spare.
 """,
     'author': 'Your Company',
     'website': '',

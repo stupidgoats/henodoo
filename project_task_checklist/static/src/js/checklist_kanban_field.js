@@ -8,12 +8,18 @@ import { standardFieldProps } from "@web/views/fields/standard_field_props";
 /**
  * Compact, directly-checkable checklist for kanban cards.
  *
- * Shows every item across all of the task's checklists as a small row with
- * its own checkbox, so an item can be checked off (Pending <-> Complete)
- * right on the card - no need to open the task. "Not Needed" items still
- * show (struck through, in red) but aren't toggleable from here: that
- * state stays a form-only action, so the card interaction stays to one
- * obvious click per item.
+ * Shows every item across all of the task's checklists as a small row.
+ * Clicking anywhere on the row cycles the item Pending -> Complete -> Not
+ * Needed -> Pending, so every state is reachable with at most two clicks.
+ * A separate "cancel" (ban) button sits at the far end of the row, well
+ * apart from the checkbox on the other side - a one-click shortcut straight
+ * to Not Needed <-> Pending, for a chore that turns out not to apply,
+ * without cycling through Complete first. Both controls stay on the same
+ * row so an item never gets much taller than a single line.
+ *
+ * Every click handler below calls stopPropagation() first - the kanban
+ * card's own click-to-open handler lives on an ancestor element, and a
+ * click meant to change an item's state must never also open the task.
  *
  * Like the form's accordion widget, this talks to the ORM directly and
  * re-fetches its own data on load rather than trusting the kanban record's
@@ -70,15 +76,25 @@ export class ChecklistKanbanField extends Component {
         return item.state === "done" || item.state === "not_needed";
     }
 
-    /* Every handler here calls stopPropagation first - the kanban card's
-     * own click-to-open handler lives on an ancestor element, and a click
-     * meant to check off an item must never also open the task. */
-    async toggleItem(item, ev) {
+    /* Row click (anywhere except the cancel button): Pending -> Complete ->
+     * Not Needed -> Pending. */
+    async cycleItem(item, ev) {
         ev.stopPropagation();
-        if (item.state === "not_needed") {
-            return;
-        }
-        const newState = item.state === "done" ? "pending" : "done";
+        const next = { pending: "done", done: "not_needed", not_needed: "pending" };
+        await this.setItemState(item, next[item.state]);
+    }
+
+    /* The cancel button always targets Not Needed specifically, regardless
+     * of the item's current state - a direct shortcut that doesn't depend
+     * on where the row-click cycle above happens to be. Clicking it again
+     * clears back to Pending, same as the form's dedicated button. */
+    async cancelItem(item, ev) {
+        ev.stopPropagation();
+        const newState = item.state === "not_needed" ? "pending" : "not_needed";
+        await this.setItemState(item, newState);
+    }
+
+    async setItemState(item, newState) {
         item.state = newState;
         await this.orm.write("project.task.checklist.line", [item.id], { state: newState });
         this.refreshParent();
@@ -87,7 +103,7 @@ export class ChecklistKanbanField extends Component {
     /* Best-effort: lets the card's own summary badges (checklist_done_count
      * and friends, used for the small done/not-needed/pending counts above
      * this widget, and for the top-of-form placement) catch up after a
-     * toggle. Not awaited by the click handler - the checkbox should flip
+     * change. Not awaited by the click handlers - the row should update
      * instantly - and non-fatal if it fails. */
     refreshParent() {
         this.props.record.load().catch(() => {});
