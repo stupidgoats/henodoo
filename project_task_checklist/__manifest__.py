@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.4.2.0',
+    'version': '18.0.4.3.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -67,12 +67,11 @@ Features
 
   The reasoning: a checklist represents work still to be done on *this*
   instance of the task, so a freshly created copy should not inherit a
-  previous instance's completed state. For a manual Duplicate or a
-  project duplication this happens via the standard copy() cascade; the
-  recurrence engine builds each new occurrence from its own fixed field
-  whitelist instead of a full copy(), so `project.task.create()` is
-  also hooked to backfill the checklist onto a freshly created
-  recurring occurrence whenever it didn't already arrive with one.
+  previous instance's completed state. All three paths copy the
+  checklist because `checklist_ids` and `line_ids` are declared
+  copy=True (see Technical note); `project.task.create()` is also
+  hooked to backfill the checklist onto a freshly created recurring
+  occurrence if it ever arrives without one.
 * `project.task.action_reset_checklist()` / `project.task.checklist.
   action_reset_checklist()` remain available for setting items back to
   Pending without duplicating the task (e.g. from a server action) -
@@ -96,13 +95,14 @@ same way the task-level progress bar always has.
 
 Technical note
 --------------
-Odoo's recurrence engine (`project.task.recurrence._create_next_occurrence`)
-creates the next task occurrence via the standard `copy()` on
-`project.task`. One2many fields are copied by the ORM's default
-`copy_data` cascade (task -> checklists -> items), so no changes to the
-recurrence engine itself are required - only
-`project.task.checklist.line.copy_data()` is overridden to force
-`state` back to 'pending' on every copy.
+Odoo's One2many fields default to copy=False, so `checklist_ids` on the
+task and `line_ids` on the checklist are both explicitly declared with
+copy=True - that's what makes Duplicate, project duplication and the
+recurrence engine (which builds each new occurrence from copy_data())
+carry checklists across. `project.task.checklist.line.copy_data()` is
+overridden to force `state` back to 'pending' on every copy.
+`project.task.create()` additionally backfills a checklist onto a new
+recurring occurrence that arrived without one, as a safety net.
 
 UI note
 -------
@@ -246,6 +246,16 @@ ever as wide as its content, regardless of how wide the sheet was. The
 wrapper (and the accordion) are now forced to full-width blocks, both in
 the stylesheet and inline from JS as a fallback, so the checklist lines up
 edge-to-edge with the form fields underneath it.
+
+Version 18.0.4.3.0 fixes Duplicate not copying a task's checklist. Every
+earlier version assumed Odoo copies a record's One2many children on
+duplicate by default - it doesn't (One2many fields default to
+copy=False), so the checklist was silently dropped. `checklist_ids`,
+the checklist's `line_ids` and the template's `line_ids` are now all
+copy=True. Copied items still reset to Pending. Python-only change (no
+schema change), but the Odoo server must be restarted for it to take
+effect - upgrading the module from Apps does that as part of the usual
+install flow.
 """,
     'author': 'Your Company',
     'website': '',

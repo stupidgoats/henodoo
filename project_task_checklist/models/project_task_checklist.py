@@ -9,7 +9,10 @@ class ProjectTaskChecklist(models.Model):
     name = fields.Char(required=True)
     task_id = fields.Many2one('project.task', required=True, ondelete='cascade', index=True)
     sequence = fields.Integer(default=10)
-    line_ids = fields.One2many('project.task.checklist.line', 'checklist_id', string='Items')
+    # copy=True matters: Odoo's One2many fields default to copy=False, so
+    # without it duplicating a checklist (or a task, below) silently drops
+    # its items. See the note on ProjectTask.checklist_ids.
+    line_ids = fields.One2many('project.task.checklist.line', 'checklist_id', string='Items', copy=True)
     template_id = fields.Many2one(
         'project.checklist.template', string='Source Template', ondelete='set null',
         help="Set automatically when this checklist was created from a template, or when it "
@@ -77,7 +80,17 @@ class ProjectTaskChecklistLine(models.Model):
 class ProjectTask(models.Model):
     _inherit = 'project.task'
 
-    checklist_ids = fields.One2many('project.task.checklist', 'task_id', string='Checklists')
+    # copy=True is what makes "Duplicate" (and project duplication) carry
+    # the checklist over. Odoo's One2many fields default to copy=False, so
+    # earlier versions of this module - which assumed the copy cascaded
+    # automatically - never copied checklists on Duplicate at all. With
+    # this set, the copy goes task -> checklists -> items, and
+    # ProjectTaskChecklistLine.copy_data() resets every item to Pending.
+    # It also means the recurrence engine (which builds each occurrence
+    # from copy_data()) now carries checklists natively; the create()
+    # backfill below stays as a safety net and skips any task that
+    # already arrived with a checklist, so nothing is created twice.
+    checklist_ids = fields.One2many('project.task.checklist', 'task_id', string='Checklists', copy=True)
 
     checklist_total_count = fields.Integer(compute='_compute_checklist_stats', string='Checklist Items')
     checklist_done_count = fields.Integer(compute='_compute_checklist_stats', string='Checklist Items Done')

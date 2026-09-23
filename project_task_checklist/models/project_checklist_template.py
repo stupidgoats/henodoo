@@ -7,7 +7,9 @@ class ProjectChecklistTemplate(models.Model):
     _order = 'name'
 
     name = fields.Char(required=True)
-    line_ids = fields.One2many('project.checklist.template.line', 'template_id', string='Items')
+    # copy=True so duplicating a template keeps its items (One2many
+    # fields default to copy=False in Odoo).
+    line_ids = fields.One2many('project.checklist.template.line', 'template_id', string='Items', copy=True)
 
 
 class ProjectChecklistTemplateLine(models.Model):
