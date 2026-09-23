@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.4.0.0',
+    'version': '18.0.4.1.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -211,6 +211,31 @@ Version 18.0.4.0.0:
   the top, so the checklist - and the rest of the form alongside it -
   can use more of a wide screen instead of a narrow column with a lot
   of blank space next to it.
+
+Version 18.0.4.1.0 fixes the two 18.0.4.0.0 fixes above, neither of which
+actually worked once tested live:
+
+* The sheet-widening CSS from 18.0.4.0.0 (a `:has()`-scoped max-width
+  override) turned out not to change anything - the sheet's real width
+  clearly comes from more than that one selector/property. Replaced with
+  a small JS fix instead: the widget now reaches up from its own root
+  element (via a proper Owl 2 `useRef`/`t-ref`, see below) to the actual
+  `.o_form_sheet` / `.o_form_sheet_bg` ancestors and sets inline
+  `!important` styles directly on them - which wins regardless of
+  whatever Odoo's own CSS does, since there's no specificity fight to
+  lose in the first place.
+* The item-entry refocus fix from 18.0.4.0.0 also turned out not to
+  work: it read `this.el` to find the "add an item" box after adding an
+  item, but Owl 2 (unlike Owl 1, which this code was apparently written
+  as if it still were) does not expose a component's root element as
+  `this.el` automatically - so that refocus was silently a no-op the
+  whole time. Fixed properly with `useRef`/`t-ref`, and, more
+  fundamentally, `addItem()` no longer reloads the whole checklist list
+  from the server afterward at all - it updates the item and the
+  checklist's counts locally instead, so the "add an item" input (which
+  sits outside the items list and was never actually re-rendered by
+  adding a sibling item) is never at risk of losing focus to begin with.
+  Enter/Tab-to-add-the-next-item should now work smoothly.
 """,
     'author': 'Your Company',
     'website': '',

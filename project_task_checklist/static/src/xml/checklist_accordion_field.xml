@@ -2,7 +2,7 @@
 <templates xml:space="preserve">
 
     <t t-name="project_task_checklist.ChecklistAccordionField" owl="1">
-        <div class="o_checklist_accordion">
+        <div class="o_checklist_accordion" t-ref="root">
 
             <t t-if="!taskId">
                 <p class="text-muted fst-italic mb-0">

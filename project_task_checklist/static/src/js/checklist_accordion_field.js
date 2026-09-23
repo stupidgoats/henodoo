@@ -1,6 +1,6 @@
 /** @odoo-module **/
 
-import { Component, useState, onWillStart } from "@odoo/owl";
+import { Component, useState, useRef, onWillStart, onMounted } from "@odoo/owl";
 import { registry } from "@web/core/registry";
 import { useService } from "@web/core/utils/hooks";
 import { standardFieldProps } from "@web/views/fields/standard_field_props";
@@ -45,9 +45,56 @@ export class ChecklistAccordionField extends Component {
             newChecklistName: "",
             newItemName: {},
         });
+        // Odoo 18 runs on Owl 2, which - unlike Owl 1 - does not expose a
+        // component's root DOM element as `this.el` automatically. A
+        // `useRef` + `t-ref` on the template's outer div is the only
+        // reliable way to reach it; code written as if `this.el` just
+        // exists (as an earlier version of this file did, for
+        // focusNewItemInput() below) silently does nothing instead of
+        // erroring, which is what let that bug hide for a while.
+        this.rootRef = useRef("root");
         onWillStart(async () => {
             await Promise.all([this.loadChecklists(), this.loadTemplates()]);
         });
+        onMounted(() => this.widenFormSheet());
+    }
+
+    /* The task form caps its sheet's width (max-width: 1400px, set by an
+     * earlier version of this file via a CSS `:has()` override) for
+     * general readability - which works against a checklist meant to be
+     * scanned and tapped through quickly on a wide screen. Verified live
+     * against the actual site: `.o_form_sheet_bg` (the sheet's immediate
+     * parent) already flexes to fill all the width the chatter panel
+     * isn't using - e.g. at a 2560px-wide window it was 1664px wide - but
+     * the *sheet itself* stayed capped at exactly 1400px, leaving a
+     * ~250px dead gap between the sheet and the chatter. That gap is
+     * exactly the "did not adapt to the window width" symptom: raising
+     * the cap to a bigger fixed number just moves the same problem to a
+     * wider screen, so this removes the cap entirely instead and lets
+     * the sheet fill 100% of whatever `.o_form_sheet_bg` gives it, on any
+     * window size - confirmed live to close the gap down to its normal
+     * ~16px padding. Reaching up from this widget's own root and setting
+     * inline `!important` styles directly on the actual ancestor elements
+     * sidesteps needing to win a specificity fight with Odoo's own CSS at
+     * all - inline `!important` beats any stylesheet rule regardless of
+     * selector or load order, which a plain CSS `:has()` rule (the
+     * earlier approach) evidently wasn't managing to do. Runs once on
+     * mount: the sheet/sheet-bg ancestors themselves are never torn down
+     * by this widget's own re-renders, only its own inner content is. */
+    widenFormSheet() {
+        const root = this.rootRef.el;
+        if (!root) {
+            return;
+        }
+        const sheet = root.closest(".o_form_sheet");
+        if (sheet) {
+            sheet.style.setProperty("max-width", "none", "important");
+            sheet.style.setProperty("width", "100%", "important");
+        }
+        const sheetBg = root.closest(".o_form_sheet_bg");
+        if (sheetBg) {
+            sheetBg.style.setProperty("max-width", "none", "important");
+        }
     }
 
     get taskId() {
@@ -262,27 +309,60 @@ export class ChecklistAccordionField extends Component {
             return;
         }
         this.state.newItemName[checklist.id] = "";
-        await this.orm.create("project.task.checklist.line", [
-            { checklist_id: checklist.id, name },
+        const lines = checklist.lines;
+        // Items don't already carry a meaningful sequence spacing from the
+        // server (every item defaults to 10), so derive the next one here
+        // too - keeps a freshly-typed item properly last, and gives
+        // moveItem() a sane base to work from afterward.
+        const sequence = lines.length ? Math.max(...lines.map((l) => l.sequence)) + 10 : 10;
+        const [id] = await this.orm.create("project.task.checklist.line", [
+            { checklist_id: checklist.id, name, sequence },
         ]);
-        await this.loadChecklists();
+        // Previously this called loadChecklists() here, which replaces
+        // state.checklists wholesale with freshly-fetched objects. The
+        // practical effect (confirmed by report) was that the "add an
+        // item" box lost focus after every single item, even after a
+        // first attempt at refocusing it - because that attempt relied on
+        // `this.el`, which Owl 2 (unlike Owl 1) does not set automatically,
+        // so the refocus silently never ran. Rather than lean on refocus
+        // working perfectly, push the new line straight into the existing
+        // reactive array instead: the "add an item" input isn't inside
+        // this t-foreach at all, so it's never torn down in the first
+        // place, and there's nothing to refocus.
+        lines.push({ id, name, sequence, state: "pending" });
+        this.recomputeChecklistCounts(checklist);
         await this.refreshParent();
-        // loadChecklists() replaces state.checklists wholesale, and
-        // whatever OWL does with the resulting re-render, the practical
-        // effect (confirmed by report) was that the "add an item" box lost
-        // focus after every single item - forcing a click back into the
-        // field before typing the next one. Re-querying and refocusing
-        // the live input after the DOM settles is what actually makes
-        // "type - Enter/Tab - type - Enter/Tab - ..." work without the
-        // mouse, regardless of why the earlier focus was lost.
+        // Kept as a defensive fallback (now actually working, via
+        // useRef/t-ref instead of the non-existent `this.el`) in case
+        // focus ever does end up elsewhere - e.g. a future change that
+        // reintroduces a reload, or a browser quirk.
         this.focusNewItemInput(checklist.id);
+    }
+
+    /* Mirrors the server's own project.task.checklist._compute_counts(),
+     * so an optimistic local change (addItem above) can update a
+     * checklist's rolled-up numbers immediately without waiting on a
+     * round trip. */
+    recomputeChecklistCounts(checklist) {
+        const lines = checklist.lines;
+        const total = lines.length;
+        const done = lines.filter((l) => l.state === "done").length;
+        const notNeeded = lines.filter((l) => l.state === "not_needed").length;
+        const resolved = done + notNeeded;
+        checklist.total_count = total;
+        checklist.done_count = done;
+        checklist.not_needed_count = notNeeded;
+        checklist.pending_count = total - resolved;
+        checklist.progress = total ? (resolved / total) * 100 : 0;
+        checklist.progress_label = `${resolved}/${total}`;
     }
 
     focusNewItemInput(checklistId) {
         requestAnimationFrame(() => {
+            const root = this.rootRef.el;
             const input =
-                this.el &&
-                this.el.querySelector(
+                root &&
+                root.querySelector(
                     `.o_checklist_new_item_input[data-checklist-id="${checklistId}"]`
                 );
             if (input) {

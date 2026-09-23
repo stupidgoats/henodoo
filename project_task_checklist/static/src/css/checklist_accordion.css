@@ -9,18 +9,16 @@
     width: 100%;
 }
 
-/* Odoo's form sheet caps its own width for general readability - which
- * works against a checklist that's meant to be scanned and tapped through
- * quickly. When a task's checklist is showing at the top of the form (i.e.
- * o_checklist_form_top is actually present), let that specific form's
- * sheet stretch wider instead of leaving most of a wide screen blank.
- * Scoped with :has() so it only affects task forms that currently have a
- * non-empty checklist showing, not every Odoo form in the database - and
- * it's a no-op on browsers without :has() support, which just leaves the
- * sheet at its normal width rather than breaking anything. */
-.o_form_sheet:has(.o_checklist_form_top) {
-    max-width: 1400px !important;
-}
+/* A `:has()`-scoped max-width override used to live here, to widen the
+ * form sheet on task forms where the checklist is showing at the top.
+ * It didn't visibly change anything on the live site - most likely
+ * because the sheet's actual rendered width comes from more than this
+ * one selector/property. That's now handled from JS instead
+ * (ChecklistAccordionField.widenFormSheet(), in
+ * checklist_accordion_field.js), which reaches up from the widget's own
+ * root element and sets inline `!important` styles directly on the real
+ * ancestor elements - guaranteed to win regardless of what Odoo's own
+ * CSS happens to do. */
 
 .o_checklist_accordion .o_checklist_group {
     border: 1px solid var(--border-color, rgba(127, 127, 127, 0.3));
