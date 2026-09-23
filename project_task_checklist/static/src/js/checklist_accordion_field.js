@@ -97,6 +97,7 @@ export class ChecklistAccordionField extends Component {
             [
                 "name",
                 "sequence",
+                "template_id",
                 "total_count",
                 "done_count",
                 "not_needed_count",
@@ -159,7 +160,15 @@ export class ChecklistAccordionField extends Component {
     }
 
     onItemKeydown(ev, checklist) {
-        if (ev.key === "Enter") {
+        // Enter always adds (if there's text) and stays put for the next
+        // item. Tab does the same *only* when there's text to add - an
+        // empty box on Tab is left alone so Tab can still move focus away
+        // normally once you're done adding items, instead of ever
+        // trapping the cursor in this field. Together this is what lets
+        // someone type an item, hit Tab (or Enter), type the next one, hit
+        // Tab, and so on without ever touching the mouse.
+        const hasText = !!(this.state.newItemName[checklist.id] || "").trim();
+        if (ev.key === "Enter" || (ev.key === "Tab" && !ev.shiftKey && hasText)) {
             ev.preventDefault();
             this.addItem(checklist);
         }
@@ -197,6 +206,32 @@ export class ChecklistAccordionField extends Component {
         await this.orm.write("project.task.checklist", [checklist.id], { name });
     }
 
+    /* Saves this checklist's current items as a new reusable template, and
+     * links this checklist to it - which is also what hides the "save as
+     * template" button afterward (see checklist.template_id below), the
+     * same signal used when a checklist is created the other way around,
+     * via "From template". */
+    async saveAsTemplate(checklist) {
+        const name = (checklist.name || "").trim();
+        if (!name) {
+            return;
+        }
+        const [templateId] = await this.orm.create("project.checklist.template", [
+            {
+                name,
+                line_ids: checklist.lines.map((line) => [
+                    0,
+                    0,
+                    { name: line.name, sequence: line.sequence },
+                ]),
+            },
+        ]);
+        await this.orm.write("project.task.checklist", [checklist.id], {
+            template_id: templateId,
+        });
+        await Promise.all([this.loadChecklists(), this.loadTemplates()]);
+    }
+
     async deleteChecklist(checklist) {
         await this.orm.unlink("project.task.checklist", [checklist.id]);
         delete this.state.expanded[checklist.id];
@@ -232,6 +267,28 @@ export class ChecklistAccordionField extends Component {
         ]);
         await this.loadChecklists();
         await this.refreshParent();
+        // loadChecklists() replaces state.checklists wholesale, and
+        // whatever OWL does with the resulting re-render, the practical
+        // effect (confirmed by report) was that the "add an item" box lost
+        // focus after every single item - forcing a click back into the
+        // field before typing the next one. Re-querying and refocusing
+        // the live input after the DOM settles is what actually makes
+        // "type - Enter/Tab - type - Enter/Tab - ..." work without the
+        // mouse, regardless of why the earlier focus was lost.
+        this.focusNewItemInput(checklist.id);
+    }
+
+    focusNewItemInput(checklistId) {
+        requestAnimationFrame(() => {
+            const input =
+                this.el &&
+                this.el.querySelector(
+                    `.o_checklist_new_item_input[data-checklist-id="${checklistId}"]`
+                );
+            if (input) {
+                input.focus();
+            }
+        });
     }
 
     async renameItem(item, name) {

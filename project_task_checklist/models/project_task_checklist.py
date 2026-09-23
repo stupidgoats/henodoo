@@ -10,6 +10,11 @@ class ProjectTaskChecklist(models.Model):
     task_id = fields.Many2one('project.task', required=True, ondelete='cascade', index=True)
     sequence = fields.Integer(default=10)
     line_ids = fields.One2many('project.task.checklist.line', 'checklist_id', string='Items')
+    template_id = fields.Many2one(
+        'project.checklist.template', string='Source Template', ondelete='set null',
+        help="Set automatically when this checklist was created from a template, or when it "
+             "was saved as one - the accordion widget uses this to hide the 'save as template' "
+             "button once a checklist is already linked to one.")
 
     total_count = fields.Integer(compute='_compute_counts')
     done_count = fields.Integer(compute='_compute_counts')
@@ -96,3 +101,52 @@ class ProjectTask(models.Model):
 
     def action_reset_checklist(self):
         self.checklist_ids.action_reset_checklist()
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        # Backfill checklists onto tasks created by the recurrence engine.
+        #
+        # copy_data() on project.task.checklist.line (see above) resets
+        # every item to Pending on any copy, which is exactly right for a
+        # manual "Duplicate" or a project duplication - both of those go
+        # through the standard copy()/copy_data() cascade, so the new
+        # task's checklist_ids already arrive fully populated by the time
+        # create() below runs.
+        #
+        # The recurrence engine (project.task.recurrence creating the next
+        # occurrence of a repeating task) is a different story: it builds
+        # the new task from a fixed whitelist of "recurring fields" and
+        # creates it fresh, rather than copying the whole record - so a
+        # third-party field like our checklist_ids was never in scope for
+        # that cascade, and the new occurrence would otherwise land with
+        # no checklist at all. Hooking create() itself - rather than trying
+        # to override the recurrence engine's own internal method (whose
+        # exact name/signature isn't something this module wants to
+        # depend on) - covers both origins the same way, since every path
+        # that creates a project.task record ultimately calls create():
+        # if the checklist already arrived on the new task, we leave it
+        # alone; if it didn't, we backfill it from the most recent other
+        # task in the same recurrence series.
+        tasks = super().create(vals_list)
+        for task in tasks:
+            if task.recurrence_id and not task.checklist_ids:
+                sibling = self.search([
+                    ('recurrence_id', '=', task.recurrence_id.id),
+                    ('id', '!=', task.id),
+                ], order='id desc', limit=1)
+                for checklist in sibling.checklist_ids:
+                    self.env['project.task.checklist'].create({
+                        'task_id': task.id,
+                        'name': checklist.name,
+                        'sequence': checklist.sequence,
+                        'template_id': checklist.template_id.id,
+                        'line_ids': [
+                            (0, 0, {
+                                'name': line.name,
+                                'sequence': line.sequence,
+                                'state': 'pending',
+                            })
+                            for line in checklist.line_ids
+                        ],
+                    })
+        return tasks

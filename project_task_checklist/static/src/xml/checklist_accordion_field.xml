@@ -45,6 +45,10 @@
                         <input type="text" t-model="checklist.name"
                                class="o_checklist_group_name"
                                t-on-change="(ev) => this.renameChecklist(checklist, ev.target.value)"/>
+                        <i class="fa fa-floppy-o o_checklist_save_template_btn flex-shrink-0"
+                           title="Save this checklist as a reusable template"
+                           t-if="!checklist.template_id"
+                           t-on-click="() => this.saveAsTemplate(checklist)"/>
                         <span class="text-muted small mx-3 flex-shrink-0"
                               t-esc="checklist.progress_label + ' resolved'"/>
                         <div class="o_checklist_progress_track flex-shrink-0" style="width: 100px;">
@@ -86,8 +90,9 @@
                         </div>
                         <div class="o_checklist_item d-flex align-items-center">
                             <i class="fa fa-plus text-muted"/>
-                            <input type="text" placeholder="Add an item…"
-                                   class="o_checklist_item_name"
+                            <input type="text" placeholder="Add an item… (Enter or Tab for the next one)"
+                                   class="o_checklist_item_name o_checklist_new_item_input"
+                                   t-att-data-checklist-id="checklist.id"
                                    t-model="state.newItemName[checklist.id]"
                                    t-on-keydown="(ev) => this.onItemKeydown(ev, checklist)"/>
                             <button class="btn btn-link btn-sm p-0 ms-2"

@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.3.3.0',
+    'version': '18.0.4.0.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -48,7 +48,14 @@ Features
   "From template" picker on the Checklist tab) creates a new checklist
   on the task pre-filled with the template's items - the task's copy is
   then independent, so editing it never touches the template or other
-  tasks.
+  tasks. A checklist can also be turned into a template the other way
+  around: the small save icon next to a checklist's name saves its
+  current items as a new template. That icon disappears once a
+  checklist is already linked to a template (whichever direction it
+  got linked from), so it never offers to save the same list twice.
+* Adding items is meant for rapid, mouse-free entry: type a name, hit
+  Enter or Tab, and the box is cleared and refocused for the next item -
+  no need to click back into the field between items.
 * A combined progress bar and done/total count for the whole task, shown
   on the task form's Checklist section and on the kanban card.
 * Checklist items automatically reset to Pending whenever a task is
@@ -60,7 +67,12 @@ Features
 
   The reasoning: a checklist represents work still to be done on *this*
   instance of the task, so a freshly created copy should not inherit a
-  previous instance's completed state.
+  previous instance's completed state. For a manual Duplicate or a
+  project duplication this happens via the standard copy() cascade; the
+  recurrence engine builds each new occurrence from its own fixed field
+  whitelist instead of a full copy(), so `project.task.create()` is
+  also hooked to backfill the checklist onto a freshly created
+  recurring occurrence whenever it didn't already arrive with one.
 * `project.task.action_reset_checklist()` / `project.task.checklist.
   action_reset_checklist()` remain available for setting items back to
   Pending without duplicating the task (e.g. from a server action) -
@@ -164,6 +176,41 @@ target rather than just a bigger glyph. Also adds a light green/red
 background tint on Complete/Not Needed rows, so progress reads at a
 glance without needing to read the strikethrough text - useful at any
 size, more so the bigger and more finger-first this gets.
+
+Version 18.0.4.0.0:
+
+* Fixes recurring tasks not carrying their checklist forward. The
+  recurrence engine turned out not to go through project.task's copy()
+  at all (it builds each new occurrence from its own fixed field
+  whitelist), so the copy_data()-based reset-to-Pending fix from
+  earlier versions never actually ran for that path. project.task.
+  create() is now hooked directly: after any new task is created, if
+  it belongs to a recurrence and arrived with no checklist of its own,
+  its checklist is backfilled from the most recent other task in that
+  same recurrence, items reset to Pending. This also covers manual
+  Duplicate/project-duplication the same way as before, since those
+  still populate checklist_ids by the time create() runs and are left
+  alone.
+* Adds `project.task.checklist.template_id`, a Many2one back to
+  project.checklist.template - set when a checklist is created from a
+  template, or when it's saved as one (see below). Purely additive.
+* Adds a "save as template" button (small floppy-disk icon) right next
+  to a checklist's name, to save its current items as a new reusable
+  template. It disappears once the checklist is already linked to a
+  template in either direction, via template_id above.
+* Fixes checklist item entry losing focus after every single item
+  (reported: each line saves, then needs a click back into the field
+  before typing the next one). Adding an item now re-focuses the "add
+  an item" box afterward, and Tab (not just Enter) now also commits the
+  current item and stays in the box - so items can be entered in a
+  fast Enter/Tab, type, Enter/Tab, type... flow without the mouse. An
+  empty box on Tab is left alone, so Tab can still leave the field
+  normally once you're done adding items.
+* Widens the task form's sheet (to 1400px, via a `:has()`-scoped CSS
+  override) specifically on forms where the checklist is showing at
+  the top, so the checklist - and the rest of the form alongside it -
+  can use more of a wide screen instead of a narrow column with a lot
+  of blank space next to it.
 """,
     'author': 'Your Company',
     'website': '',

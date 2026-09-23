@@ -32,6 +32,7 @@ class ProjectChecklistTemplateApply(models.TransientModel):
         return self.env['project.task.checklist'].create({
             'task_id': self.task_id.id,
             'name': self.template_id.name,
+            'template_id': self.template_id.id,
             'line_ids': [
                 (0, 0, {'name': line.name, 'sequence': line.sequence})
                 for line in self.template_id.line_ids

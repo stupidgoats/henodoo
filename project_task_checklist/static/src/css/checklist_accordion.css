@@ -6,6 +6,20 @@
 
 .o_checklist_form_top {
     margin: 4px 0 20px 0;
+    width: 100%;
+}
+
+/* Odoo's form sheet caps its own width for general readability - which
+ * works against a checklist that's meant to be scanned and tapped through
+ * quickly. When a task's checklist is showing at the top of the form (i.e.
+ * o_checklist_form_top is actually present), let that specific form's
+ * sheet stretch wider instead of leaving most of a wide screen blank.
+ * Scoped with :has() so it only affects task forms that currently have a
+ * non-empty checklist showing, not every Odoo form in the database - and
+ * it's a no-op on browsers without :has() support, which just leaves the
+ * sheet at its normal width rather than breaking anything. */
+.o_form_sheet:has(.o_checklist_form_top) {
+    max-width: 1400px !important;
 }
 
 .o_checklist_accordion .o_checklist_group {
@@ -38,6 +52,18 @@
     min-width: 0;
     padding: 2px 4px;
     border-radius: 3px;
+}
+
+.o_checklist_accordion .o_checklist_save_template_btn {
+    cursor: pointer;
+    opacity: 0.5;
+    margin-left: 10px;
+    color: var(--bs-body-color, inherit);
+}
+
+.o_checklist_accordion .o_checklist_save_template_btn:hover {
+    opacity: 1;
+    color: var(--bs-success, #28a745);
 }
 
 .o_checklist_accordion .o_checklist_group_name:focus,
