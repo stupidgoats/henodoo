@@ -86,6 +86,25 @@ export class ChecklistAccordionField extends Component {
         if (!root) {
             return;
         }
+        // The actual cause of the checklist looking narrower than the form
+        // fields below it: Odoo's per-field wrapper div (the element
+        // directly around this widget) is a shrink-to-fit inline block for
+        // a field outside a <group>, so it only grew as wide as its
+        // content. Make it - and anything else between this widget and
+        // the sheet - a full-width block. The stylesheet does the same;
+        // this is the belt-and-braces version that doesn't depend on
+        // guessing Odoo's wrapper class name.
+        for (let el = root.parentElement; el && !el.classList.contains("o_form_sheet"); el = el.parentElement) {
+            if (el.classList.contains("o_notebook") || el.classList.contains("tab-pane")) {
+                break;
+            }
+            el.style.setProperty("display", "block", "important");
+            el.style.setProperty("width", "100%", "important");
+            el.style.setProperty("max-width", "none", "important");
+            if (el.classList.contains("o_checklist_form_top")) {
+                break;
+            }
+        }
         const sheet = root.closest(".o_form_sheet");
         if (sheet) {
             sheet.style.setProperty("max-width", "none", "important");

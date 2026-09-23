@@ -9,6 +9,24 @@
     width: 100%;
 }
 
+/* Odoo wraps every field widget in its own <div class="o_field_widget
+ * o_field_<widget>">. For a field placed outside a <group> (as ours is,
+ * both at the top of the form and on the Checklist tab), that wrapper is
+ * a shrink-to-fit inline block - so the whole accordion was only as wide
+ * as its content (~500px), narrower than the Project/Assignees/Dates
+ * fields below it, and long item names got cut off. Force the wrapper
+ * (and the accordion inside it) to take the full row, so the checklist
+ * lines up with the rest of the form. The JS widget also applies this
+ * inline as a fallback (see widenFormSheet()), in case Odoo's wrapper
+ * class name differs from what's targeted here. */
+.o_form_view .o_field_widget.o_field_checklist_accordion,
+.o_checklist_form_top > .o_field_widget,
+.o_checklist_accordion {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+}
+
 /* A `:has()`-scoped max-width override used to live here, to widen the
  * form sheet on task forms where the checklist is showing at the top.
  * It didn't visibly change anything on the live site - most likely

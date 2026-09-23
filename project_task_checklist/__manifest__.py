@@ -1,6 +1,6 @@
 {
     'name': 'Project Task Checklist',
-    'version': '18.0.4.1.0',
+    'version': '18.0.4.2.0',
     'category': 'Services/Project',
     'summary': 'Add checklists to project tasks, checkable from the kanban card, auto-reset on recurrence',
     'description': """
@@ -236,6 +236,16 @@ actually worked once tested live:
   sits outside the items list and was never actually re-rendered by
   adding a sibling item) is never at risk of losing focus to begin with.
   Enter/Tab-to-add-the-next-item should now work smoothly.
+
+Version 18.0.4.2.0 fixes what the width complaint was actually about: the
+checklist block itself was narrower than the Project/Assignees/Dates fields
+right below it (and long item names were getting cut off). Cause: Odoo
+wraps each field widget in its own div, and for a field outside a <group>
+that wrapper is a shrink-to-fit inline block - so the accordion was only
+ever as wide as its content, regardless of how wide the sheet was. The
+wrapper (and the accordion) are now forced to full-width blocks, both in
+the stylesheet and inline from JS as a fallback, so the checklist lines up
+edge-to-edge with the form fields underneath it.
 """,
     'author': 'Your Company',
     'website': '',
